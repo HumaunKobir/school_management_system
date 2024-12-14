@@ -152,9 +152,101 @@ class MenuSeeder extends Seeder
                     ],
                 ],
             ],
+            [
+                'name' => 'Class Manage',
+                'icon' => 'layers',
+                'route' => null,
+                'description' => null,
+                'sorting' => 1,
+                'permission_name' => 'class-management',
+                'status' => 'Active',
+                'children' => [
+                    [
+                        'name' => 'Class Add',
+                        'icon' => 'plus-circle',
+                        'route' => 'backend.class.create',
+                        'description' => null,
+                        'sorting' => 1,
+                        'permission_name' => 'class-add',
+                        'status' => 'Active',
+                    ],
+                    [
+                        'name' => 'Class List',
+                        'icon' => 'list',
+                        'route' => 'backend.class.index',
+                        'description' => null,
+                        'sorting' => 1,
+                        'permission_name' => 'class-list',
+                        'status' => 'Active',
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Student Manage',
+                'icon' => 'layers',
+                'route' => null,
+                'description' => null,
+                'sorting' => 1,
+                'permission_name' => 'student-management',
+                'status' => 'Active',
+                'children' => [
+                    [
+                        'name' => 'Student Add',
+                        'icon' => 'plus-circle',
+                        'route' => 'backend.student.create',
+                        'description' => null,
+                        'sorting' => 1,
+                        'permission_name' => 'student-add',
+                        'status' => 'Active',
+                    ],
+                    [
+                        'name' => 'Student List',
+                        'icon' => 'list',
+                        'route' => 'backend.student.index',
+                        'description' => null,
+                        'sorting' => 1,
+                        'permission_name' => 'student-list',
+                        'status' => 'Active',
+                    ],
+                ],
+            ],
 
 
-    //don't remove this comment from menu seeder
+
+
+
+	[
+        'name' => 'Teacher Manage',
+        'icon' => 'layers',
+        'route' => null,
+        'description' => null,
+        'sorting' => 1,
+        'permission_name' => 'teacher-management',
+        'status' => 'Active',
+        'children' => [
+            [
+                'name' => 'Teacher Add',
+                'icon' => 'plus-circle',
+                'route' => 'backend.teacher.create',
+                'description' => null,
+                'sorting' => 1,
+                'permission_name' => 'teacher-add',
+                'status' => 'Active',
+            ],
+            [
+                'name' => 'Teacher List',
+                'icon' => 'list',
+                'route' => 'backend.teacher.index',
+                'description' => null,
+                'sorting' => 1,
+                'permission_name' => 'teacher-list',
+                'status' => 'Active',
+            ],
+        ],
+    ],
+
+
+	//don't remove this comment from menu seeder
         ];
     }
 }

@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Backend\AdminController;
+use App\Http\Controllers\Backend\ClassController;
+use App\Http\Controllers\Backend\StudentController;
+use App\Http\Controllers\Backend\TeacherController;
 use App\Http\Controllers\Backend\DashboardController;
 use App\Http\Controllers\Backend\ModuleMakerController;
 use App\Http\Controllers\Backend\PermissionController;
@@ -58,6 +61,23 @@ Route::group(['middleware' => 'AdminAuth'], function () {
 
     // for permission entry
     Route::resource('permission', PermissionController::class);
+
+    //for class
+    Route::resource('class', ClassController::class);
+    Route::get('class/{id}/status/{status}/change', [ClassController::class, 'changeStatus'])->name('class.status.change'); 
+
+    //for student
+    Route::resource('student', StudentController::class);
+    Route::get('student/{id}/status/{status}/change', [StudentController::class, 'changeStatus'])->name('student.status.change'); 
+
+
+
+
+
+	//for Teacher
+Route::resource('teacher', TeacherController::class);
+Route::get('teacher/{id}/status/{status}/change', [TeacherController::class, 'changeStatus'])->name('teacher.status.change');
+
 
 	//don't remove this comment from route body
 });
