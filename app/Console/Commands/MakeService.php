@@ -64,13 +64,27 @@ class MakeService extends Command
         //Route
         $routePath = base_path('routes');
         $routeFile = $routePath . '/backend.php';
+        $routeFiles = $routePath . '/backend.php';
         
+        $generatedNamespace = $this->generateRouteName($model, $table);
+        
+
+        $existingRoute = File::get($routeFiles);
+        $insertMarkerUper = "//don't remove this comment from route namespace";
+        
+        if (str_contains($existingRoute, $insertMarkerUper)) {
+            $newContent = str_replace($insertMarkerUper, "$generatedNamespace\n\n\t$insertMarkerUper", $existingRoute);
+            File::put($routeFiles, $newContent);
+            echo "Routes Namespace added successfully to backend.php file.\n";
+        } else {
+            echo "Marker for insertion not found in backend.php file.\n";
+        }
+
         $generatedCode = $this->generateRouteCode($model, $table);
-        
+
         $existingRoutes = File::get($routeFile);
-        
         $insertMarker = "//don't remove this comment from route body";
-        
+
         if (str_contains($existingRoutes, $insertMarker)) {
             $newContent = str_replace($insertMarker, "$generatedCode\n\n\t$insertMarker", $existingRoutes);
             File::put($routeFile, $newContent);
@@ -133,13 +147,22 @@ class MakeService extends Command
         $this->info('File created successfully: ' . $filePath);
     }
 
+    function generateRouteName($model, $table)
+    {
+$code = <<<EOT
+use App\Http\Controllers\Backend\\{$model}Controller;
+
+EOT;
+        return $code;
+    }
+
     function generateRouteCode($model, $table)
     {
         $lowercaseModel = strtolower($model);
         $code = <<<EOT
-        //for $model
-        Route::resource('$lowercaseModel', {$model}Controller::class);
-        Route::get('$lowercaseModel/{id}/status/{status}/change', [{$model}Controller::class, 'changeStatus'])->name('$lowercaseModel.status.change');
+            //for $model
+            Route::resource('$lowercaseModel', {$model}Controller::class);
+            Route::get('$lowercaseModel/{id}/status/{status}/change', [{$model}Controller::class, 'changeStatus'])->name('$lowercaseModel.status.change');
 
         EOT;
         return $code;
@@ -149,7 +172,7 @@ class MakeService extends Command
     {
         $lowercaseModel = strtolower($model);
         $code = <<<EOT
-        [
+            [
                 'name' => '$model Manage',
                 'icon' => 'layers',
                 'route' => null,
@@ -197,7 +220,7 @@ class MakeService extends Command
 
         class $model extends Authenticatable
         {
-            use Notifiable,HasFactory, SoftDeletes;
+            use Notifiable,HasFactory;
 
             protected \$table = '$table';
 
@@ -482,8 +505,10 @@ class MakeService extends Command
 
             private function getDatas()
             {
-                if (request()->filled('phone'))
-                    \$query->where('phone', 'like', request()->phone . '%');
+                \$query = \$this->{$service}->list();
+
+                if (request()->filled('name'))
+                    \$query->where('name', 'like', request()->name . '%');
 
 
                 \$datas = \$query->paginate(request()->numOfData ?? 10)->withQueryString();
@@ -499,17 +524,17 @@ class MakeService extends Command
                     \$customData->links = [
                         [
                             'linkClass' => 'semi-bold text-white statusChange ' . ((\$data->status == 'Active') ? "bg-gray-500" : "bg-green-500"),
-                            'link' => route('backend.lowercaseModel.status.change', ['id' => \$data->id, 'status' => \$data->status == 'Active' ? 'Inactive' : 'Active']),
+                            'link' => route('backend.$lowercaseModel.status.change', ['id' => \$data->id, 'status' => \$data->status == 'Active' ? 'Inactive' : 'Active']),
                             'linkLabel' => getLinkLabel(((\$data->status == 'Active') ? "Inactive" : "Active"), null, null)
                         ],
                         [
                             'linkClass' => 'bg-yellow-400 text-black semi-bold',
-                            'link' => route('backend.lowercaseModel.edit',  \$data->id),
+                            'link' => route('backend.$lowercaseModel.edit',  \$data->id),
                             'linkLabel' => getLinkLabel('Edit', null, null)
                         ],
                         [
                             'linkClass' => 'deleteButton bg-red-500 text-white semi-bold',
-                            'link' => route('backend.lowercaseModel.destroy', \$data->id),
+                            'link' => route('backend.$lowercaseModel.destroy', \$data->id),
                             'linkLabel' => getLinkLabel('Delete', null, null)
                         ]
 
@@ -526,6 +551,7 @@ class MakeService extends Command
                     ['fieldName' => 'index', 'class' => 'text-center'],
                     ['fieldName' => 'photo', 'class' => 'text-center'],
                     ['fieldName' => 'name', 'class' => 'text-center'],
+                    ['fieldName' => 'status', 'class' => 'text-center'],
                 ];
             }
             private function getTableHeaders()
@@ -592,7 +618,7 @@ class MakeService extends Command
                     //   dd(\$err);
                     DB::rollBack();
                     \$this->storeSystemError('Backend', '$controller', 'store', substr(\$err->getMessage(), 0, 1000));
-                    dd(\$err);
+                    //dd(\$err);
                     DB::commit();
                     \$message = "Server Errors Occur. Please Try Again.";
                     // dd(\$message);

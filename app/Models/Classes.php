@@ -1,18 +1,41 @@
 <?php
-
 namespace App\Models;
-
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Traits\HasRoles;
 
-class Classes extends Model
+class Classes extends Authenticatable
 {
-    use  Notifiable, HasFactory, HasRoles;
+    use Notifiable,HasFactory;
 
     protected $table = 'classes';
 
     protected $fillable = [
-        'class_name',
-        'section',
-    ];
+                    'name',
+                ];
+
+    protected static function boot()
+    {
+        parent::boot();
+        static::saving(function ($model) {
+            $model->created_at = date('Y-m-d H:i:s');
+        });
+
+        static::updating(function ($model) {
+            $model->updated_at = date('Y-m-d H:i:s');
+        });
+    }
+
+    public function getImageAttribute($value)
+    {
+        return (!is_null($value)) ? env('APP_URL') . '/public/storage/' . $value : null;
+    }
+
+    public function getFileAttribute($value)
+    {
+        return (!is_null($value)) ? env('APP_URL') . '/public/storage/' . $value : null;
+    }
 }

@@ -1,11 +1,13 @@
 <?php
-
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ClassRequest;
+use App\Http\Requests\StudentRequest;
 use Illuminate\Support\Facades\DB;
-use App\Services\ClassService;
+use App\Services\StudentService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use App\Traits\SystemTrait;
 use Exception;
@@ -14,62 +16,64 @@ class StudentController extends Controller
 {
     use SystemTrait;
 
-    protected $classService;
+    protected $studentService;
 
-    public function __construct(ClassService $classService)
+    public function __construct(StudentService $studentService)
     {
-        $this->classService = $classService;
+        $this->studentService = $studentService;
     }
+
+
 
     public function index()
     {
         return Inertia::render(
-            'Backend/Class/Index',
+            'Backend/Student/Index',
             [
-                'pageTitle' => fn () => 'User List',
+                'pageTitle' => fn () => 'Student List',
                 'breadcrumbs' => fn () => [
-                    ['link' => null, 'title' => 'User Manage'],
-                    ['link' => route('backend.class.index'), 'title' => 'User List'],
+                    ['link' => null, 'title' => 'Student Manage'],
+                    ['link' => route('backend.student.index'), 'title' => 'Student List'],
                 ],
                 'tableHeaders' => fn () => $this->getTableHeaders(),
                 'dataFields' => fn () => $this->dataFields(),
-                'datas' => fn () => $this->getDatas()
+                'datas' => fn () => $this->getDatas(),
             ]
         );
     }
 
     private function getDatas()
     {
-        $query = $this->classService->list();
+        $query = $this->studentService->list();
 
+        if (request()->filled('phone'))
+            $query->where('phone', 'like', request()->phone . '%');
 
-        if (request()->filled('class_name'))
-            $query->where('class_name', 'like', request()->class_name . '%');
 
         $datas = $query->paginate(request()->numOfData ?? 10)->withQueryString();
 
         $formatedDatas = $datas->map(function ($data, $index) {
             $customData = new \stdClass();
             $customData->index = $index + 1;
-            $customData->name = $data->class_name;
-            $customData->email = $data->section;
+            $customData->name = $data->name;
+            $customData->photo = '<img src="' . $data->photo . '" height="50" width="50"/>';
             $customData->status = getStatusText($data->status);
 
             $customData->hasLink = true;
             $customData->links = [
                 [
                     'linkClass' => 'semi-bold text-white statusChange ' . (($data->status == 'Active') ? "bg-gray-500" : "bg-green-500"),
-                    'link' => route('backend.class.status.change', ['id' => $data->id, 'status' => $data->status == 'Active' ? 'Inactive' : 'Active']),
+                    'link' => route('backend.lowercaseModel.status.change', ['id' => $data->id, 'status' => $data->status == 'Active' ? 'Inactive' : 'Active']),
                     'linkLabel' => getLinkLabel((($data->status == 'Active') ? "Inactive" : "Active"), null, null)
                 ],
                 [
                     'linkClass' => 'bg-yellow-400 text-black semi-bold',
-                    'link' => route('backend.class.edit',  $data->id),
+                    'link' => route('backend.lowercaseModel.edit',  $data->id),
                     'linkLabel' => getLinkLabel('Edit', null, null)
                 ],
                 [
                     'linkClass' => 'deleteButton bg-red-500 text-white semi-bold',
-                    'link' => route('backend.class.destroy', $data->id),
+                    'link' => route('backend.lowercaseModel.destroy', $data->id),
                     'linkLabel' => getLinkLabel('Delete', null, null)
                 ]
 
@@ -84,16 +88,16 @@ class StudentController extends Controller
     {
         return [
             ['fieldName' => 'index', 'class' => 'text-center'],
-            ['fieldName' => 'class_name', 'class' => 'text-center'],
-            ['fieldName' => 'section', 'class' => 'text-center'],
+            ['fieldName' => 'photo', 'class' => 'text-center'],
+            ['fieldName' => 'name', 'class' => 'text-center'],
         ];
     }
     private function getTableHeaders()
     {
         return [
             'Sl/No',
-            'Class Name',
-            'Section',
+            'Photo',
+            'Name',
             'Status',
             'Action',
         ];
@@ -102,30 +106,38 @@ class StudentController extends Controller
     public function create()
     {
         return Inertia::render(
-            'Backend/Class/Form',
+            'Backend/Student/Form',
             [
-                'pageTitle' => fn () => 'Class Create',
+                'pageTitle' => fn () => 'Student Create',
                 'breadcrumbs' => fn () => [
-                    ['link' => null, 'title' => 'Class Manage'],
-                    ['link' => route('backend.class.create'), 'title' => 'Class Create'],
+                    ['link' => null, 'title' => 'Student Manage'],
+                    ['link' => route('backend.student.create'), 'title' => 'Student Create'],
                 ],
             ]
         );
     }
 
-    public function store(ClassRequest $request)
+
+    public function store(StudentRequest $request)
     {
+
         DB::beginTransaction();
         try {
 
             $data = $request->validated();
 
+            if ($request->hasFile('image'))
+                $data['image'] = $this->imageUpload($request->file('image'), 'students');
 
-            $dataInfo = $this->classService->create($data);
+            if ($request->hasFile('file'))
+                $data['file'] = $this->fileUpload($request->file('file'), 'students');
+
+
+            $dataInfo = $this->studentService->create($data);
 
             if ($dataInfo) {
-                $message = 'Class created successfully';
-                $this->storeAdminWorkLog($dataInfo->id, 'classes', $message);
+                $message = 'Student created successfully';
+                $this->storeAdminWorkLog($dataInfo->id, 'students', $message);
 
                 DB::commit();
 
@@ -135,16 +147,19 @@ class StudentController extends Controller
             } else {
                 DB::rollBack();
 
-                $message = "Failed To create user.";
+                $message = "Failed To create Student.";
                 return redirect()
                     ->back()
                     ->with('errorMessage', $message);
             }
         } catch (Exception $err) {
+            //   dd($err);
             DB::rollBack();
-            $this->storeSystemError('Backend', 'ClassController', 'store', substr($err->getMessage(), 0, 1000));
+            $this->storeSystemError('Backend', 'StudentController', 'store', substr($err->getMessage(), 0, 1000));
+            dd($err);
             DB::commit();
             $message = "Server Errors Occur. Please Try Again.";
+            // dd($message);
             return redirect()
                 ->back()
                 ->with('errorMessage', $message);
@@ -153,31 +168,57 @@ class StudentController extends Controller
 
     public function edit($id)
     {
-        $user = $this->classService->find($id);
+        $student = $this->studentService->find($id);
 
         return Inertia::render(
-            'Backend/Class/Form',
+            'Backend/Student/Form',
             [
-                'pageTitle' => fn () => 'Class Edit',
+                'pageTitle' => fn () => 'Student Edit',
                 'breadcrumbs' => fn () => [
-                    ['link' => null, 'title' => 'Class Manage'],
-                    ['link' => route('backend.class.edit', $user->id), 'title' => 'Branch Edit'],
+                    ['link' => null, 'title' => 'Student Manage'],
+                    ['link' => route('backend.student.edit', $id), 'title' => 'Student Edit'],
                 ],
+                'student' => fn () => $student,
+                'id' => fn () => $id,
             ]
         );
     }
 
-    public function update(ClassRequest $request, $id)
+    public function update(StudentRequest $request, $id)
     {
         DB::beginTransaction();
         try {
-            $admin = $this->classService->find($id);
-            $data = $request->validated();
 
-            $dataInfo = $this->classService->update($data, $id);
-            if ($dataInfo->wasChanged()) {
-                $message = 'Class updated successfully';
-                $this->storeAdminWorkLog($dataInfo->id, 'classes', $message);
+            $data = $request->validated();
+            $student = $this->studentService->find($id);
+
+            if ($request->hasFile('image')) {
+                $data['image'] = $this->imageUpload($request->file('image'), 'students');
+                $path = strstr($student->image, 'storage/');
+                if (file_exists($path)) {
+                    unlink($path);
+                }
+            } else {
+
+                $data['image'] = strstr($student->image ?? '', 'students');
+            }
+
+            if ($request->hasFile('file')) {
+                $data['file'] = $this->fileUpload($request->file('file'), 'students/');
+                $path = strstr($student->file, 'storage/');
+                if (file_exists($path)) {
+                    unlink($path);
+                }
+            } else {
+
+                $data['file'] = strstr($student->file ?? '', 'students/');
+            }
+
+            $dataInfo = $this->studentService->update($data, $id);
+
+            if ($dataInfo->save()) {
+                $message = 'Student updated successfully';
+                $this->storeAdminWorkLog($dataInfo->id, 'students', $message);
 
                 DB::commit();
 
@@ -187,14 +228,14 @@ class StudentController extends Controller
             } else {
                 DB::rollBack();
 
-                $message = "Failed To update Branch.";
+                $message = "Failed To update students.";
                 return redirect()
                     ->back()
                     ->with('errorMessage', $message);
             }
         } catch (Exception $err) {
             DB::rollBack();
-            $this->storeSystemError('Backend', 'ClassController', 'update', substr($err->getMessage(), 0, 1000));
+            $this->storeSystemError('Backend', 'StudentController', 'update', substr($err->getMessage(), 0, 1000));
             DB::commit();
             $message = "Server Errors Occur. Please Try Again.";
             return redirect()
@@ -209,11 +250,10 @@ class StudentController extends Controller
         DB::beginTransaction();
 
         try {
-            $dataInfo = $this->classService->delete($id);
 
-            if ($dataInfo->wasChanged()) {
-                $message = 'Class deleted successfully';
-                $this->storeAdminWorkLog($dataInfo->id, 'classes', $message);
+            if ($this->studentService->delete($id)) {
+                $message = 'Student deleted successfully';
+                $this->storeAdminWorkLog($id, 'students', $message);
 
                 DB::commit();
 
@@ -223,14 +263,14 @@ class StudentController extends Controller
             } else {
                 DB::rollBack();
 
-                $message = "Failed To Delete User.";
+                $message = "Failed To Delete Student.";
                 return redirect()
                     ->back()
                     ->with('errorMessage', $message);
             }
         } catch (Exception $err) {
             DB::rollBack();
-            $this->storeSystemError('Backend', 'ClassController', 'destroy', substr($err->getMessage(), 0, 1000));
+            $this->storeSystemError('Backend', 'StudentController', 'destroy', substr($err->getMessage(), 0, 1000));
             DB::commit();
             $message = "Server Errors Occur. Please Try Again.";
             return redirect()
@@ -239,16 +279,17 @@ class StudentController extends Controller
         }
     }
 
-    public function changeStatus()
+    public function changeStatus(Request $request, $id, $status)
     {
         DB::beginTransaction();
 
         try {
-            $dataInfo = $this->classService->changeStatus(request());
+
+            $dataInfo = $this->studentService->changeStatus($id, $status);
 
             if ($dataInfo->wasChanged()) {
-                $message = 'User ' . request()->status . ' Successfully';
-                $this->storeAdminWorkLog($dataInfo->id, 'classes', $message);
+                $message = 'Student ' . request()->status . ' Successfully';
+                $this->storeAdminWorkLog($dataInfo->id, 'students', $message);
 
                 DB::commit();
 
@@ -258,14 +299,14 @@ class StudentController extends Controller
             } else {
                 DB::rollBack();
 
-                $message = "Failed To " . request()->status . " User.";
+                $message = "Failed To " . request()->status . "Student.";
                 return redirect()
                     ->back()
                     ->with('errorMessage', $message);
             }
         } catch (Exception $err) {
             DB::rollBack();
-            $this->storeSystemError('Backend', 'ClassController', 'changeStatus', substr($err->getMessage(), 0, 1000));
+            $this->storeSystemError('Backend', 'StudentController', 'changeStatus', substr($err->getMessage(), 0, 1000));
             DB::commit();
             $message = "Server Errors Occur. Please Try Again.";
             return redirect()
@@ -273,4 +314,4 @@ class StudentController extends Controller
                 ->with('errorMessage', $message);
         }
     }
-}
+        }

@@ -44,6 +44,8 @@ class TeacherController extends Controller
 
     private function getDatas()
     {
+        $query = $this->teacherService->list();
+
         if (request()->filled('phone'))
             $query->where('phone', 'like', request()->phone . '%');
 

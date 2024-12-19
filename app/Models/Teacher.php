@@ -9,7 +9,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class Teacher extends Authenticatable
 {
-    use Notifiable,HasFactory, SoftDeletes;
+    use Notifiable,HasFactory;
 
     protected $table = 'teachers';
 
