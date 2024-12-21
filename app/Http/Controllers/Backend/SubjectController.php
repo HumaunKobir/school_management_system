@@ -333,4 +333,9 @@ class SubjectController extends Controller
                 ->with('errorMessage', $message);
         }
     }
-        }
+    public function getGroupsByClass($classId)
+    {
+        $groups = Group::where('class_id', $classId)->get();
+        return response()->json($groups);
+    }
+}

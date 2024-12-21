@@ -14,6 +14,7 @@ class Group extends Authenticatable
     protected $table = 'groups';
 
     protected $fillable = [
+                    'class_id',
                     'name',
                 ];
 
@@ -28,7 +29,14 @@ class Group extends Authenticatable
             $model->updated_at = date('Y-m-d H:i:s');
         });
     }
-
+    public function class()
+    {
+        return $this->belongsTo(Classes::class, 'class_id','id');
+    }
+    public function classes()
+    {
+        return $this->hasMany(Classes::class, 'class_id','id');
+    }
     public function getImageAttribute($value)
     {
         return (!is_null($value)) ? env('APP_URL') . '/public/storage/' . $value : null;

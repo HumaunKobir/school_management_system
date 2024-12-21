@@ -1,62 +1,81 @@
 
 
 <script setup>
-    import { ref, onMounted } from 'vue';
-    import BackendLayout from '@/Layouts/BackendLayout.vue';
-    import { router, useForm, usePage } from '@inertiajs/vue3';
-    import InputError from '@/Components/InputError.vue';
-    import InputLabel from '@/Components/InputLabel.vue';
-    import PrimaryButton from '@/Components/PrimaryButton.vue';
-    import AlertMessage from '@/Components/AlertMessage.vue';
-    import { displayResponse, displayWarning } from '@/responseMessage.js';
+import { ref, onMounted } from 'vue';
+import BackendLayout from '@/Layouts/BackendLayout.vue';
+import { router, useForm, usePage } from '@inertiajs/vue3';
+import InputError from '@/Components/InputError.vue';
+import InputLabel from '@/Components/InputLabel.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
+import AlertMessage from '@/Components/AlertMessage.vue';
+import { displayResponse, displayWarning } from '@/responseMessage.js';
 
-    const props = defineProps(['classroutine', 'id','classes','sections','groups','subjects','rooms']);
+const props = defineProps(['classroutine', 'id', 'classes', 'sections', 'rooms', 'groups', 'subjects']);
 
-    const form = useForm({
-        class_id: props.classroutine?.class_id ?? '',
-        section_id: props.classroutine?.section_id ?? '',
-        group_id: props.classroutine?.group_id ?? '',
-        subject_id: props.classroutine?.subject_id ?? '',
-        room_id: props.classroutine?.room_id ?? '',
-        day: props.classroutine?.day ?? '',
-        start_time: props.classroutine?.start_time ?? '',
-        end_time: props.classroutine?.end_time ?? '',
-        _method: props.classroutine?.id ? 'put' : 'post',
+const form = useForm({
+    class_id: props.classroutine?.class_id ?? '',
+    section_id: props.classroutine?.section_id ?? '',
+    group_id: props.classroutine?.group_id ?? '',
+    subject_id: props.classroutine?.subject_id ?? '',
+    room_id: props.classroutine?.room_id ?? '',
+    day: props.classroutine?.day ?? '',
+    start_time: props.classroutine?.start_time ?? '',
+    end_time: props.classroutine?.end_time ?? '',
+    _method: props.classroutine?.id ? 'put' : 'post',
+});
+
+const filteredGroups = ref([]);
+const filteredSections = ref([]);
+const filteredSubjects = ref([]);
+
+
+const fetchGroupsByClass = async (classId) => {
+    if (!classId) {
+        return displayWarning({ message: "Please select a class." });
+    }
+
+    try {
+        const responses = await axios.get(route("backend.groups.byClass", { classId }));
+        filteredGroups.value = responses.data;
+        const response = await axios.get(route("backend.sections.byClass", { classId }));
+        filteredSections.value = response.data;
+    } catch (error) {
+        displayWarning({ message: "Failed to load groups." });
+    }
+};
+
+const fetchSubjectsByGroup = async (groupId) => {
+    if (!groupId) {
+        return displayWarning({ message: "Please select a group." });
+    }
+
+    try {
+        const response = await axios.get(route("backend.subjects.byGroup", { groupId }));
+        filteredSubjects.value = response.data;
+    } catch (error) {
+        displayWarning({ message: "Failed to load subjects." });
+    }
+};
+
+const submit = () => {
+    const routeName = props.id ? route('backend.classroutine.update', props.id) : route('backend.classroutine.store');
+    form.transform((data) => ({
+        ...data,
+        remember: '',
+        isDirty: false,
+    })).post(routeName, {
+        onSuccess: (response) => {
+            if (!props.id) form.reset();
+            displayResponse(response);
+        },
+        onError: (errorObject) => {
+            displayWarning(errorObject);
+        },
     });
+};
+</script>
 
-    const handlePhotoChange = (event) => {
-        const file = event.target.files[0];
-        form.photo = file;
 
-        // Display photo preview
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            form.photoPreview = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    };
-
-    const submit = () => {
-        const routeName = props.id ? route('backend.classroutine.update', props.id) : route('backend.classroutine.store');
-        form.transform(data => ({
-            ...data,
-            remember: '',
-            isDirty: false,
-        })).post(routeName, {
-
-            onSuccess: (response) => {
-                if (!props.id)
-                    form.reset();
-                displayResponse(response);
-            },
-            onError: (errorObject) => {
-
-                displayWarning(errorObject);
-            },
-        });
-    };
-
-    </script>
 
     <template>
         <BackendLayout>
@@ -76,55 +95,45 @@
                     <AlertMessage />
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
                         
-                    <div class="col-span-1 md:col-span-2">
-                        <InputLabel for="class_id" value="Class" />
-                        <select id="industry_news_category"
-                            class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
-                            v-model="form.class_id" type="text" placeholder="">
-                            <option value="">Class</option>
-                            <option v-for="classe in classes"
-                                :key="classe.id" :value="classe.id">
-                                {{ classe.name }}
-                            </option>
-                        </select>
-                        <InputError class="mt-2" :message="form.errors.class_id" />
-                    </div>
+                        <div class="col-span-1 md:col-span-2">
+                            <InputLabel for="class_id" value="Class" />
+                            <select id="class_id" class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
+                                v-model="form.class_id" @change="fetchGroupsByClass(form.class_id)">
+                                <option value="">Class</option>
+                                <option v-for="classe in classes" :key="classe.id" :value="classe.id">{{ classe.name }}</option>
+                            </select>
+                            <InputError class="mt-2" :message="form.errors.class_id" />
+                        </div>
+
+                    <!-- Section Selection -->
                     <div class="col-span-1 md:col-span-2">
                         <InputLabel for="section_id" value="Section" />
-                        <select id="section_id"
-                            class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
-                            v-model="form.section_id" type="text" placeholder="">
-                            <option value="">Section</option>
-                            <option v-for="section in sections"
-                                :key="section.id" :value="section.id">
-                                {{ section.name }}
-                            </option>
+                        <select id="section_id" class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
+                            v-model="form.section_id">
+                            <option value="">Select Section</option>
+                            <option v-for="section in filteredSections" :key="section.id" :value="section.id">{{ section.name }}</option>
                         </select>
                         <InputError class="mt-2" :message="form.errors.section_id" />
                     </div>
+
+                    <!-- Group Selection -->
                     <div class="col-span-1 md:col-span-2">
                         <InputLabel for="group_id" value="Group" />
-                        <select id="group_id"
-                            class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
-                            v-model="form.group_id" type="text" placeholder="">
-                            <option value="">section</option>
-                            <option v-for="group in groups"
-                                :key="group.id" :value="group.id">
-                                {{ group.name }}
-                            </option>
+                        <select id="group_id" class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
+                            v-model="form.group_id" @change="fetchSubjectsByGroup(form.group_id)">
+                            <option value="">Select Group</option>
+                            <option v-for="group in filteredGroups" :key="group.id" :value="group.id">{{ group.name }}</option>
                         </select>
                         <InputError class="mt-2" :message="form.errors.group_id" />
                     </div>
+
+                    <!-- Subject Selection -->
                     <div class="col-span-1 md:col-span-2">
                         <InputLabel for="subject_id" value="Subject" />
-                        <select id="subject_id"
-                            class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
-                            v-model="form.subject_id" type="text" placeholder="">
-                            <option value="">Subject</option>
-                            <option v-for="subject in subjects"
-                                :key="subject.id" :value="subject.id">
-                                {{ subject.name }}
-                            </option>
+                        <select id="subject_id" class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
+                            v-model="form.subject_id">
+                            <option value="">Select Subject</option>
+                            <option v-for="subject in filteredSubjects" :key="subject.id" :value="subject.id">{{ subject.name }}</option>
                         </select>
                         <InputError class="mt-2" :message="form.errors.subject_id" />
                     </div>
@@ -149,12 +158,13 @@
                             class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
                             v-model="form.day" type="text" placeholder="">
                             <option value="">Select Day</option>
-                            <option value="Saterday">Saterday</option>
+                            <option value="Saturday">Saturday</option>
                             <option value="Sunday">Sunday</option>
                             <option value="Monday">Monday</option>
                             <option value="Tuesday">Tuesday</option>
                             <option value="Wednesday">Wednesday</option>
-                            <option value="Tharsday">Tharsday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
                             
                         </select>
                         <InputError class="mt-2" :message="form.errors.day" />

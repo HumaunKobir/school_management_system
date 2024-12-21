@@ -5,6 +5,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StudentRequest;
 use Illuminate\Support\Facades\DB;
 use App\Services\StudentService;
+use App\Services\ClassesService;
+use App\Services\SectionService;
+use App\Services\GroupService;
+use App\Models\Group;
+use App\Models\Section;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
@@ -16,11 +21,14 @@ class StudentController extends Controller
 {
     use SystemTrait;
 
-    protected $studentService;
+    protected $studentService,$classesService,$sectionService,$groupService;
 
-    public function __construct(StudentService $studentService)
+    public function __construct(StudentService $studentService, ClassesService $classesService,SectionService $sectionService,GroupService $groupService,)
     {
         $this->studentService = $studentService;
+        $this->classesService = $classesService;
+        $this->sectionService = $sectionService;
+        $this->groupService = $groupService;
     }
 
 
@@ -55,7 +63,18 @@ class StudentController extends Controller
         $formatedDatas = $datas->map(function ($data, $index) {
             $customData = new \stdClass();
             $customData->index = $index + 1;
+            $customData->student_id = $data->student_id;
             $customData->name = $data->name;
+            $customData->father_name = $data->father_name;
+            $customData->mother_name = $data->mother_name;
+            $customData->phone = $data->phone;
+            $customData->email = $data->email;
+            $customData->address = $data->address;
+            $customData->date_of_birth = $data->date_of_birth;
+            $customData->admission_date = $data->admission_date;
+            $customData->class_id = $data->class->name;
+            $customData->section_id = $data->section->name;
+            $customData->group_id = $data->group->name;
             $customData->photo = '<img src="' . $data->photo . '" height="50" width="50"/>';
             $customData->status = getStatusText($data->status);
 
@@ -63,17 +82,17 @@ class StudentController extends Controller
             $customData->links = [
                 [
                     'linkClass' => 'semi-bold text-white statusChange ' . (($data->status == 'Active') ? "bg-gray-500" : "bg-green-500"),
-                    'link' => route('backend.lowercaseModel.status.change', ['id' => $data->id, 'status' => $data->status == 'Active' ? 'Inactive' : 'Active']),
+                    'link' => route('backend.student.status.change', ['id' => $data->id, 'status' => $data->status == 'Active' ? 'Inactive' : 'Active']),
                     'linkLabel' => getLinkLabel((($data->status == 'Active') ? "Inactive" : "Active"), null, null)
                 ],
                 [
                     'linkClass' => 'bg-yellow-400 text-black semi-bold',
-                    'link' => route('backend.lowercaseModel.edit',  $data->id),
+                    'link' => route('backend.student.edit',  $data->id),
                     'linkLabel' => getLinkLabel('Edit', null, null)
                 ],
                 [
                     'linkClass' => 'deleteButton bg-red-500 text-white semi-bold',
-                    'link' => route('backend.lowercaseModel.destroy', $data->id),
+                    'link' => route('backend.student.destroy', $data->id),
                     'linkLabel' => getLinkLabel('Delete', null, null)
                 ]
 
@@ -88,16 +107,39 @@ class StudentController extends Controller
     {
         return [
             ['fieldName' => 'index', 'class' => 'text-center'],
-            ['fieldName' => 'photo', 'class' => 'text-center'],
+            ['fieldName' => 'student_id', 'class' => 'text-center'],
             ['fieldName' => 'name', 'class' => 'text-center'],
+            ['fieldName' => 'father_name', 'class' => 'text-center'],
+            ['fieldName' => 'mother_name', 'class' => 'text-center'],
+            ['fieldName' => 'phone', 'class' => 'text-center'],
+            ['fieldName' => 'email', 'class' => 'text-center'],
+            ['fieldName' => 'address', 'class' => 'text-center'],
+            ['fieldName' => 'date_of_birth', 'class' => 'text-center'],
+            ['fieldName' => 'admission_date', 'class' => 'text-center'],
+            ['fieldName' => 'photo', 'class' => 'text-center'],
+            ['fieldName' => 'class_id', 'class' => 'text-center'],
+            ['fieldName' => 'section_id', 'class' => 'text-center'],
+            ['fieldName' => 'group_id', 'class' => 'text-center'],
+            ['fieldName' => 'status', 'class' => 'text-center'],
         ];
     }
     private function getTableHeaders()
     {
         return [
             'Sl/No',
-            'Photo',
+            'Student Id',
             'Name',
+            'Father Name',
+            'Mother Name',
+            'Phone',
+            'Email',
+            'Address',
+            'Date Of Birth',
+            'Admission Date',
+            'Photo',
+            'Class Name',
+            'Section Name',
+            'Group Name',
             'Status',
             'Action',
         ];
@@ -105,6 +147,7 @@ class StudentController extends Controller
 
     public function create()
     {
+        $classes = $this->classesService->activeList();
         return Inertia::render(
             'Backend/Student/Form',
             [
@@ -113,6 +156,7 @@ class StudentController extends Controller
                     ['link' => null, 'title' => 'Student Manage'],
                     ['link' => route('backend.student.create'), 'title' => 'Student Create'],
                 ],
+                'classes' => fn() => $classes,
             ]
         );
     }
@@ -125,9 +169,12 @@ class StudentController extends Controller
         try {
 
             $data = $request->validated();
-
-            if ($request->hasFile('image'))
-                $data['image'] = $this->imageUpload($request->file('image'), 'students');
+            $currentDate = now();
+            $yearMonth = $currentDate->format('Ym'); 
+            $uniqueNumber = $this->generateUniqueStudentNumber($yearMonth);
+            $data['student_id'] = $yearMonth . $uniqueNumber;
+            if ($request->hasFile('photo'))
+                $data['photo'] = $this->imageUpload($request->file('photo'), 'students');
 
             if ($request->hasFile('file'))
                 $data['file'] = $this->fileUpload($request->file('file'), 'students');
@@ -169,6 +216,9 @@ class StudentController extends Controller
     public function edit($id)
     {
         $student = $this->studentService->find($id);
+        $classes = $this->classesService->activeList();
+        $sections = $this->sectionService->findByClassId($student->class_id);
+        $groups = $this->groupService->findByClassId($student->class_id);
 
         return Inertia::render(
             'Backend/Student/Form',
@@ -180,6 +230,9 @@ class StudentController extends Controller
                 ],
                 'student' => fn () => $student,
                 'id' => fn () => $id,
+                'classes' => fn () => $classes,
+                'sections' => fn() => $sections,
+                'groups' => fn() => $groups,
             ]
         );
     }
@@ -192,27 +245,17 @@ class StudentController extends Controller
             $data = $request->validated();
             $student = $this->studentService->find($id);
 
-            if ($request->hasFile('image')) {
-                $data['image'] = $this->imageUpload($request->file('image'), 'students');
-                $path = strstr($student->image, 'storage/');
+            if ($request->hasFile('photo')) {
+                $data['photo'] = $this->imageUpload($request->file('photo'), 'students');
+                $path = strstr($student->photo, 'storage/');
                 if (file_exists($path)) {
                     unlink($path);
                 }
             } else {
 
-                $data['image'] = strstr($student->image ?? '', 'students');
+                $data['photo'] = strstr($student->photo ?? '', 'students');
             }
 
-            if ($request->hasFile('file')) {
-                $data['file'] = $this->fileUpload($request->file('file'), 'students/');
-                $path = strstr($student->file, 'storage/');
-                if (file_exists($path)) {
-                    unlink($path);
-                }
-            } else {
-
-                $data['file'] = strstr($student->file ?? '', 'students/');
-            }
 
             $dataInfo = $this->studentService->update($data, $id);
 
@@ -314,4 +357,25 @@ class StudentController extends Controller
                 ->with('errorMessage', $message);
         }
     }
+    public function getGroupsByClass($classId)
+    {
+        $groups = Group::where('class_id', $classId)->get();
+        return response()->json($groups);
+    }
+    public function getSectionsByClass($classId)
+    {
+        $sections = Section::where('class_id', $classId)->get();
+        return response()->json($sections);
+    }
+    private function generateUniqueStudentNumber($yearMonth)
+    {
+        $lastStudent = $this->studentService->latestStudentId($yearMonth);
+
+        if ($lastStudent) {
+            $lastNumber = (int)substr($lastStudent->student_id, strrpos($lastStudent->student_id, '-') + 1);
+            return str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
         }
+
+        return '0001';
+    }
+}

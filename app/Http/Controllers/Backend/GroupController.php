@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\GroupRequest;
 use Illuminate\Support\Facades\DB;
 use App\Services\GroupService;
+use App\Services\ClassesService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
@@ -16,11 +17,12 @@ class GroupController extends Controller
 {
     use SystemTrait;
 
-    protected $groupService;
+    protected $groupService,$classesService;
 
-    public function __construct(GroupService $groupService)
+    public function __construct(GroupService $groupService,ClassesService $classesService)
     {
         $this->groupService = $groupService;
+        $this->classesService = $classesService;
     }
 
 
@@ -55,6 +57,7 @@ class GroupController extends Controller
         $formatedDatas = $datas->map(function ($data, $index) {
             $customData = new \stdClass();
             $customData->index = $index + 1;
+            $customData->class_id = $data->class->name;
             $customData->name = $data->name;
             $customData->status = getStatusText($data->status);
 
@@ -87,6 +90,7 @@ class GroupController extends Controller
     {
         return [
             ['fieldName' => 'index', 'class' => 'text-center'],
+            ['fieldName' => 'class_id', 'class' => 'text-center'],
             ['fieldName' => 'name', 'class' => 'text-center'],
             ['fieldName' => 'status', 'class' => 'text-center'],
         ];
@@ -95,6 +99,7 @@ class GroupController extends Controller
     {
         return [
             'Sl/No',
+            'Class Name',
             'Name',
             'Status',
             'Action',
@@ -103,6 +108,7 @@ class GroupController extends Controller
 
     public function create()
     {
+        $classes = $this->classesService->activeList();
         return Inertia::render(
             'Backend/Group/Form',
             [
@@ -111,6 +117,7 @@ class GroupController extends Controller
                     ['link' => null, 'title' => 'Group Manage'],
                     ['link' => route('backend.group.create'), 'title' => 'Group Create'],
                 ],
+                'classes' => fn() => $classes,
             ]
         );
     }
@@ -161,6 +168,7 @@ class GroupController extends Controller
     public function edit($id)
     {
         $group = $this->groupService->find($id);
+        $classes = $this->classesService->activeList();
 
         return Inertia::render(
             'Backend/Group/Form',
@@ -172,6 +180,7 @@ class GroupController extends Controller
                 ],
                 'group' => fn () => $group,
                 'id' => fn () => $id,
+                'classes' => fn() => $classes
             ]
         );
     }

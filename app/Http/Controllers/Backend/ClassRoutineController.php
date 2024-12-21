@@ -10,6 +10,9 @@ use App\Services\SectionService;
 use App\Services\GroupService;
 use App\Services\SubjectService;
 use App\Services\ClassRoomService;
+use App\Models\Group;
+use App\Models\Subject;
+use App\Models\Section;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
@@ -298,7 +301,21 @@ class ClassRoutineController extends Controller
                 ->with('errorMessage', $message);
         }
     }
-
+    public function getGroupsByClass($classId)
+    {
+        $groups = Group::where('class_id', $classId)->get();
+        return response()->json($groups);
+    }
+    public function getSectionsByClass($classId)
+    {
+        $sections = Section::where('class_id', $classId)->get();
+        return response()->json($sections);
+    }
+    public function getSubjectsByGroup($groupId)
+    {
+        $subjects = Subject::where('group_id', $groupId)->get();
+        return response()->json($subjects);
+    }
     public function changeStatus(Request $request, $id, $status)
     {
         DB::beginTransaction();

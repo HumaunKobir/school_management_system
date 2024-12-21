@@ -19,7 +19,20 @@
         subject_code: props.subject?.subject_code ?? '',
         _method: props.subject?.id ? 'put' : 'post',
     });
+    const filteredGroups = ref([]);
 
+    const fetchGroupsByClass = async (classId) => {
+        if (!classId) {
+            return displayWarning({ message: "Please select a class." });
+        }
+
+        try {
+            const response = await axios.get(route("backend.groups.byClass", { classId }));
+            filteredGroups.value = response.data;
+        } catch (error) {
+            displayWarning({ message: "Failed to load groups." });
+        }
+    };
     const handlePhotoChange = (event) => {
         const file = event.target.files[0];
         form.photo = file;
@@ -66,35 +79,28 @@
                     </div>
                     <div class="p-4 py-2">
                     </div>
-                </div>
+                </div>@change="fetchSubjectsByGroup(form.group_id)"
 
                 <form @submit.prevent="submit" class="p-4">
                     <AlertMessage />
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
-
                         <div class="col-span-1 md:col-span-2">
                         <InputLabel for="class_id" value="Class" />
-                        <select id="industry_news_category"
-                            class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
-                            v-model="form.class_id" type="text" placeholder="">
-                            <option value="">Select Class</option>
-                            <option v-for="classe in classes"
-                                :key="classe.id" :value="classe.id">
-                                {{ classe.name }}
-                            </option>
+                        <select id="class_id" class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
+                            v-model="form.class_id" @change="fetchGroupsByClass(form.class_id)">
+                            <option value="">Class</option>
+                            <option v-for="classe in classes" :key="classe.id" :value="classe.id">{{ classe.name }}</option>
                         </select>
                         <InputError class="mt-2" :message="form.errors.class_id" />
                     </div>
+
+                    <!-- Group Selection -->
                     <div class="col-span-1 md:col-span-2">
                         <InputLabel for="group_id" value="Group" />
-                        <select id="group_id"
-                            class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
-                            v-model="form.group_id" type="text" placeholder="">
+                        <select id="group_id" class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
+                            v-model="form.group_id">
                             <option value="">Select Group</option>
-                            <option v-for="group in groups"
-                                :key="group.id" :value="group.id">
-                                {{ group.name }}
-                            </option>
+                            <option v-for="group in filteredGroups" :key="group.id" :value="group.id">{{ group.name }}</option>
                         </select>
                         <InputError class="mt-2" :message="form.errors.group_id" />
                     </div>

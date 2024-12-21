@@ -14,7 +14,21 @@ class Student extends Authenticatable
     protected $table = 'students';
 
     protected $fillable = [
+                    'student_id',
                     'name',
+                    'father_name',
+                    'mother_name',
+                    'phone',
+                    'email',
+                    'address',
+                    'date_of_birth',
+                    'admission_date',
+                    'photo',
+                    'class_id',
+                    'section_id',
+                    'group_id',
+                    'password',
+                    'status',
                 ];
 
     protected static function boot()
@@ -28,7 +42,32 @@ class Student extends Authenticatable
             $model->updated_at = date('Y-m-d H:i:s');
         });
     }
+    public function class()
+    {
+        return $this->belongsTo(Classes::class, 'class_id','id');
+    }
+    public function classes()
+    {
+        return $this->hasMany(Classes::class, 'class_id','id');
+    }
 
+    public function section()
+    {
+        return $this->belongsTo(Section::class, 'section_id','id');
+    }
+    public function sections()
+    {
+        return $this->hasMany(Section::class, 'section_id','id');
+    }
+
+    public function group()
+    {
+        return $this->belongsTo(Group::class, 'group_id','id');
+    }
+    public function groups()
+    {
+        return $this->hasMany(Group::class, 'group_id','id');
+    }
     public function getImageAttribute($value)
     {
         return (!is_null($value)) ? env('APP_URL') . '/public/storage/' . $value : null;

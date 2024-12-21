@@ -103,7 +103,7 @@ Route::group(['middleware' => 'AdminAuth'], function () {
         //for Subject
     Route::resource('subject', SubjectController::class);
     Route::get('subject/{id}/status/{status}/change', [SubjectController::class, 'changeStatus'])->name('subject.status.change');
-
+    Route::get('groups/byClass/{classId}', [SubjectController::class, 'getGroupsByClass'])->name('groups.byClass');
 
         //for Exam
     Route::resource('exam', ExamController::class);
@@ -138,6 +138,10 @@ Route::group(['middleware' => 'AdminAuth'], function () {
         //for ClassRoutine
     Route::resource('classroutine', ClassRoutineController::class);
     Route::get('classroutine/{id}/status/{status}/change', [ClassRoutineController::class, 'changeStatus'])->name('classroutine.status.change');
+
+    Route::get('groups/byClass/{classId}', [ClassRoutineController::class, 'getGroupsByClass'])->name('groups.byClass');
+    Route::get('sections/byClass/{classId}', [ClassRoutineController::class, 'getSectionsByClass'])->name('sections.byClass');
+    Route::get('subjects/byGroup/{groupId}', [ClassRoutineController::class, 'getSubjectsByGroup'])->name('subjects.byGroup');
 
 
         //for Grade
@@ -197,8 +201,10 @@ Route::group(['middleware' => 'AdminAuth'], function () {
 
 
 	//for Student
-Route::resource('student', StudentController::class);
-Route::get('student/{id}/status/{status}/change', [StudentController::class, 'changeStatus'])->name('student.status.change');
+    Route::resource('student', StudentController::class);
+    Route::get('student/{id}/status/{status}/change', [StudentController::class, 'changeStatus'])->name('student.status.change');
+    Route::get('section/byClass/{classId}', [StudentController::class, 'getSectionsByClass'])->name('section.byClass');
+    Route::get('group/byGroup/{classId}', [StudentController::class, 'getGroupsByClass'])->name('group.byClass');
 
 
 	    //for Classes

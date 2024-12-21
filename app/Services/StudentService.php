@@ -80,5 +80,12 @@ class StudentService
         return  $this->studentModel->whereNull('deleted_at')->where('status', 'Active')->get();
     }
 
+    public function latestStudentId($yearMonth)
+    {
+        return Student::where('student_id', 'like', "$yearMonth-%")
+            ->orderBy('student_id', 'desc')
+            ->first();
+    }
+
 }
 

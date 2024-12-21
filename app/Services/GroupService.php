@@ -79,6 +79,10 @@ class GroupService
     {
         return  $this->groupModel->whereNull('deleted_at')->where('status', 'Active')->get();
     }
+    public function findByClassId($classId)
+    {
+        return Group::where('class_id', $classId)->get();
+    }
 
 }
 

@@ -79,6 +79,10 @@ class SectionService
     {
         return  $this->sectionModel->whereNull('deleted_at')->where('status', 'Active')->get();
     }
+    public function findByClassId($classId)
+    {
+        return Section::where('class_id', $classId)->get();
+    }
 
 }
 

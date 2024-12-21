@@ -11,12 +11,14 @@ class GroupRequest extends FormRequest
         switch ($this->method()) {
             case 'POST':
                 return [
+                    'class_id' => 'required|max:255',
                     'name' => 'required|string|max:255',
                 ];
                 break;
 
             case 'PUT':
                 return [
+                    'class_id' => 'required',
                     'name' => 'required|string|max:255',
                 ];
                 break;
@@ -35,7 +37,8 @@ class GroupRequest extends FormRequest
     {
 
         return [
-            'name.required' => __('The first name field is required.'),
+            'class_id.required' => __('The class name field is required.'),
+            'name.required' => __('The group name field is required.'),
         ];
     }
 }

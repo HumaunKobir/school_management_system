@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SectionRequest;
 use Illuminate\Support\Facades\DB;
 use App\Services\SectionService;
+use App\Services\ClassesService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
@@ -16,11 +17,12 @@ class SectionController extends Controller
 {
     use SystemTrait;
 
-    protected $sectionService;
+    protected $sectionService,$classesService;
 
-    public function __construct(SectionService $sectionService)
+    public function __construct(SectionService $sectionService, ClassesService $classesService)
     {
         $this->sectionService = $sectionService;
+        $this->classesService = $classesService;
     }
 
 
@@ -55,6 +57,7 @@ class SectionController extends Controller
         $formatedDatas = $datas->map(function ($data, $index) {
             $customData = new \stdClass();
             $customData->index = $index + 1;
+            $customData->class_id = $data->class->class_id;
             $customData->name = $data->name;
             $customData->total_sit = $data->total_sit;
             $customData->status = getStatusText($data->status);
@@ -88,6 +91,7 @@ class SectionController extends Controller
     {
         return [
             ['fieldName' => 'index', 'class' => 'text-center'],
+            ['fieldName' => 'class_id', 'class' => 'text-center'],
             ['fieldName' => 'name', 'class' => 'text-center'],
             ['fieldName' => 'total_sit', 'class' => 'text-center'],
             ['fieldName' => 'status', 'class' => 'text-center'],
@@ -97,6 +101,7 @@ class SectionController extends Controller
     {
         return [
             'Sl/No',
+            'Class Name',
             'Name',
             'total_sit',
             'Status',
@@ -106,6 +111,7 @@ class SectionController extends Controller
 
     public function create()
     {
+        $classes = $this->classesService->activeList();
         return Inertia::render(
             'Backend/Section/Form',
             [
@@ -114,6 +120,7 @@ class SectionController extends Controller
                     ['link' => null, 'title' => 'Section Manage'],
                     ['link' => route('backend.section.create'), 'title' => 'Section Create'],
                 ],
+                'classes' => fn() => $classes,
             ]
         );
     }
@@ -163,6 +170,7 @@ class SectionController extends Controller
     public function edit($id)
     {
         $section = $this->sectionService->find($id);
+        $classes = $this->classesService->activeList();
 
         return Inertia::render(
             'Backend/Section/Form',
@@ -174,6 +182,7 @@ class SectionController extends Controller
                 ],
                 'section' => fn () => $section,
                 'id' => fn () => $id,
+                'classes' => fn() => $classes,
             ]
         );
     }
