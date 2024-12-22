@@ -25,6 +25,7 @@
                 $table->string('date_of_birth');
                 $table->string('education_level');
                 $table->date('jonning_date');
+                $table->string('file')->nullable();
                 $table->string('photo')->nullable();
                 $table->string('password');
                 $table->enum('status',['Active','Inactive','Deleted'])->default('Active');

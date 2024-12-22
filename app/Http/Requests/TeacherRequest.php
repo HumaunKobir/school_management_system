@@ -12,7 +12,18 @@ class TeacherRequest extends FormRequest
             case 'POST':
                 return [
                     'name' => 'required|string|max:255',
-                    'email' => 'required|email|unique:admins,email|max:255',
+                    'father_name' => 'required|string|max:255',
+                    'mother_name' => 'required|string|max:255',
+                    'phone' => 'required|max:255',
+                    'email' => 'required|string|max:255',
+                    'address' => 'required|string|max:255',
+                    'date_of_birth' => 'required|max:255',
+                    'education_level' => 'required|string|max:255',
+                    'jonning_date' => 'required|max:255',
+                    'photo' => 'required|string|max:255',
+                    'password' => 'required|max:255',
+                    'email' => 'email|unique:teachers,email|max:255',
+                    'file' => 'nullable|file',
                     'photo' => 'file|mimes:png,jpg,jpeg|max:25048',
                 ];
                 break;
@@ -20,7 +31,18 @@ class TeacherRequest extends FormRequest
             case 'PUT':
                 return [
                     'name' => 'required|string|max:255',
-                    'email' => 'required|email|max:255|unique:admins,id,' . $this->id,
+                    'father_name' => 'required|string|max:255',
+                    'mother_name' => 'required|string|max:255',
+                    'phone' => 'required|max:255',
+                    'email' => 'required|string|max:255',
+                    'address' => 'required|string|max:255',
+                    'date_of_birth' => 'required|max:255',
+                    'education_level' => 'required|string|max:255',
+                    'jonning_date' => 'required|max:255',
+                    'photo' => 'required|string|max:255',
+                    'password' => 'required|max:255',
+                    'email' => 'email|max:255|unique:teachers,id,' . $this->id,
+                    'file' => 'nullable|file',
                     'photo' => 'nullable|file|mimes:png,jpg,jpeg|max:25048',
                 ];
                 break;

@@ -57,7 +57,7 @@ class SectionController extends Controller
         $formatedDatas = $datas->map(function ($data, $index) {
             $customData = new \stdClass();
             $customData->index = $index + 1;
-            $customData->class_id = $data->class->class_id;
+            $customData->class_id = $data->class->name;
             $customData->name = $data->name;
             $customData->total_sit = $data->total_sit;
             $customData->status = getStatusText($data->status);

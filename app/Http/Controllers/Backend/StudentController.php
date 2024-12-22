@@ -170,9 +170,22 @@ class StudentController extends Controller
 
             $data = $request->validated();
             $currentDate = now();
-            $yearMonth = $currentDate->format('Ym'); 
-            $uniqueNumber = $this->generateUniqueStudentNumber($yearMonth);
-            $data['student_id'] = $yearMonth . $uniqueNumber;
+            $classCode = $request->class_id;
+            $year = $currentDate->format('Y');
+
+            $lastStudent = DB::table('students')
+                ->where('class_id', $classCode)
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($lastStudent) {
+                $lastNumber = (int) substr($lastStudent->student_id, -3);
+                $uniqueNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
+            } else {
+                $uniqueNumber = '001';
+            }
+
+            $data['student_id'] = $year . '0' . $classCode . $uniqueNumber;
             if ($request->hasFile('photo'))
                 $data['photo'] = $this->imageUpload($request->file('photo'), 'students');
 
@@ -203,7 +216,7 @@ class StudentController extends Controller
             //   dd($err);
             DB::rollBack();
             $this->storeSystemError('Backend', 'StudentController', 'store', substr($err->getMessage(), 0, 1000));
-            dd($err);
+            //dd($err);
             DB::commit();
             $message = "Server Errors Occur. Please Try Again.";
             // dd($message);
@@ -366,16 +379,5 @@ class StudentController extends Controller
     {
         $sections = Section::where('class_id', $classId)->get();
         return response()->json($sections);
-    }
-    private function generateUniqueStudentNumber($yearMonth)
-    {
-        $lastStudent = $this->studentService->latestStudentId($yearMonth);
-
-        if ($lastStudent) {
-            $lastNumber = (int)substr($lastStudent->student_id, strrpos($lastStudent->student_id, '-') + 1);
-            return str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
-        }
-
-        return '0001';
     }
 }

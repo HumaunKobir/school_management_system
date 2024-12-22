@@ -14,7 +14,19 @@ class Teacher extends Authenticatable
     protected $table = 'teachers';
 
     protected $fillable = [
+                    'teacher_id',
                     'name',
+                    'father_name',
+                    'mother_name',
+                    'phone',
+                    'email',
+                    'address',
+                    'date_of_birth',
+                    'education_level',
+                    'jonning_date',
+                    'file',
+                    'photo',
+                    'password',
                 ];
 
     protected static function boot()

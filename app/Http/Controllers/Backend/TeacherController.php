@@ -55,7 +55,17 @@ class TeacherController extends Controller
         $formatedDatas = $datas->map(function ($data, $index) {
             $customData = new \stdClass();
             $customData->index = $index + 1;
+            $customData->teacher_id = $data->teacher_id;
             $customData->name = $data->name;
+            $customData->father_name = $data->father_name;
+            $customData->mother_name = $data->mother_name;
+            $customData->phone = $data->phone;
+            $customData->email = $data->email;
+            $customData->address = $data->address;
+            $customData->date_of_birth = $data->date_of_birth;
+            $customData->education_level = $data->education_level;
+            $customData->jonning_date = $data->jonning_date;
+            $customData->file = "<a href='" . $data->file . "' target='_blank'>View File</a>";
             $customData->photo = '<img src="' . $data->photo . '" height="50" width="50"/>';
             $customData->status = getStatusText($data->status);
 
@@ -63,17 +73,17 @@ class TeacherController extends Controller
             $customData->links = [
                 [
                     'linkClass' => 'semi-bold text-white statusChange ' . (($data->status == 'Active') ? "bg-gray-500" : "bg-green-500"),
-                    'link' => route('backend.lowercaseModel.status.change', ['id' => $data->id, 'status' => $data->status == 'Active' ? 'Inactive' : 'Active']),
+                    'link' => route('backend.teacher.status.change', ['id' => $data->id, 'status' => $data->status == 'Active' ? 'Inactive' : 'Active']),
                     'linkLabel' => getLinkLabel((($data->status == 'Active') ? "Inactive" : "Active"), null, null)
                 ],
                 [
                     'linkClass' => 'bg-yellow-400 text-black semi-bold',
-                    'link' => route('backend.lowercaseModel.edit',  $data->id),
+                    'link' => route('backend.teacher.edit',  $data->id),
                     'linkLabel' => getLinkLabel('Edit', null, null)
                 ],
                 [
                     'linkClass' => 'deleteButton bg-red-500 text-white semi-bold',
-                    'link' => route('backend.lowercaseModel.destroy', $data->id),
+                    'link' => route('backend.teacher.destroy', $data->id),
                     'linkLabel' => getLinkLabel('Delete', null, null)
                 ]
 
@@ -88,16 +98,37 @@ class TeacherController extends Controller
     {
         return [
             ['fieldName' => 'index', 'class' => 'text-center'],
-            ['fieldName' => 'photo', 'class' => 'text-center'],
+            ['fieldName' => 'teacher_id', 'class' => 'text-center'],
             ['fieldName' => 'name', 'class' => 'text-center'],
+            ['fieldName' => 'father_name', 'class' => 'text-center'],
+            ['fieldName' => 'mother_name', 'class' => 'text-center'],
+            ['fieldName' => 'phone', 'class' => 'text-center'],
+            ['fieldName' => 'email', 'class' => 'text-center'],
+            ['fieldName' => 'address', 'class' => 'text-center'],
+            ['fieldName' => 'date_of_birth', 'class' => 'text-center'],
+            ['fieldName' => 'education_level', 'class' => 'text-center'],
+            ['fieldName' => 'jonning_date', 'class' => 'text-center'],
+            ['fieldName' => 'file', 'class' => 'text-center'],
+            ['fieldName' => 'photo', 'class' => 'text-center'],
+            ['fieldName' => 'status', 'class' => 'text-center'],
         ];
     }
     private function getTableHeaders()
     {
         return [
             'Sl/No',
-            'Photo',
+            'Teacher Id',
             'Name',
+            'Father Name',
+            'Mother Name',
+            'Phone',
+            'Email',
+            'Address',
+            'Date of Birth',
+            'Education Level',
+            'Joning Date',
+            'CV',
+            'Photo',
             'Status',
             'Action',
         ];
@@ -125,12 +156,27 @@ class TeacherController extends Controller
         try {
 
             $data = $request->validated();
+            $currentDate = now();
+            $year = $currentDate->format('Y');
 
-            if ($request->hasFile('image'))
-                $data['image'] = $this->imageUpload($request->file('image'), 'teachers');
+            $lastStudent = DB::table('teachers')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($lastStudent) {
+                $lastNumber = (int) substr($lastStudent->teacher_id, -4);
+                $uniqueNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+            } else {
+                $uniqueNumber = '0001';
+            }
+
+            $data['teacher_id'] = $year . $uniqueNumber;
+
+            if ($request->hasFile('photo'))
+                $data['photo'] = $this->imageUpload($request->file('photo'), 'teachers');
 
             if ($request->hasFile('file'))
-                $data['file'] = $this->fileUpload($request->file('file'), 'teachers');
+                $data['file'] = $this->fileUpload($request->file('file'), 'teachersCv');
 
 
             $dataInfo = $this->teacherService->create($data);
