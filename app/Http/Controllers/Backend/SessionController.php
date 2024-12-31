@@ -2,11 +2,9 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\SectionRequest;
+use App\Http\Requests\SessionRequest;
 use Illuminate\Support\Facades\DB;
-use App\Services\SectionService;
 use App\Services\SessionService;
-use App\Services\ClassesService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
@@ -14,17 +12,15 @@ use Inertia\Inertia;
 use App\Traits\SystemTrait;
 use Exception;
 
-class SectionController extends Controller
+class SessionController extends Controller
 {
     use SystemTrait;
 
-    protected $sectionService, $sessionService, $classesService;
+    protected $sessionService;
 
-    public function __construct(SectionService $sectionService,SessionService $sessionService, ClassesService $classesService)
+    public function __construct(SessionService $sessionService)
     {
-        $this->sectionService = $sectionService;
         $this->sessionService = $sessionService;
-        $this->classesService = $classesService;
     }
 
 
@@ -32,12 +28,12 @@ class SectionController extends Controller
     public function index()
     {
         return Inertia::render(
-            'Backend/Section/Index',
+            'Backend/Session/Index',
             [
-                'pageTitle' => fn () => 'Section List',
+                'pageTitle' => fn () => 'Session List',
                 'breadcrumbs' => fn () => [
-                    ['link' => null, 'title' => 'Section Manage'],
-                    ['link' => route('backend.section.index'), 'title' => 'Section List'],
+                    ['link' => null, 'title' => 'Session Manage'],
+                    ['link' => route('backend.session.index'), 'title' => 'Session List'],
                 ],
                 'tableHeaders' => fn () => $this->getTableHeaders(),
                 'dataFields' => fn () => $this->dataFields(),
@@ -48,7 +44,7 @@ class SectionController extends Controller
 
     private function getDatas()
     {
-        $query = $this->sectionService->list();
+        $query = $this->sessionService->list();
 
         if (request()->filled('name'))
             $query->where('name', 'like', request()->name . '%');
@@ -59,27 +55,24 @@ class SectionController extends Controller
         $formatedDatas = $datas->map(function ($data, $index) {
             $customData = new \stdClass();
             $customData->index = $index + 1;
-            $customData->class_id = $data->class->name;
-            $customData->session_id = $data->session->session_year;
-            $customData->name = $data->name;
-            $customData->total_sit = $data->total_sit;
+            $customData->session_year = $data->session_year;
             $customData->status = getStatusText($data->status);
 
             $customData->hasLink = true;
             $customData->links = [
                 [
                     'linkClass' => 'semi-bold text-white statusChange ' . (($data->status == 'Active') ? "bg-gray-500" : "bg-green-500"),
-                    'link' => route('backend.section.status.change', ['id' => $data->id, 'status' => $data->status == 'Active' ? 'Inactive' : 'Active']),
+                    'link' => route('backend.session.status.change', ['id' => $data->id, 'status' => $data->status == 'Active' ? 'Inactive' : 'Active']),
                     'linkLabel' => getLinkLabel((($data->status == 'Active') ? "Inactive" : "Active"), null, null)
                 ],
                 [
                     'linkClass' => 'bg-yellow-400 text-black semi-bold',
-                    'link' => route('backend.section.edit',  $data->id),
+                    'link' => route('backend.session.edit',  $data->id),
                     'linkLabel' => getLinkLabel('Edit', null, null)
                 ],
                 [
                     'linkClass' => 'deleteButton bg-red-500 text-white semi-bold',
-                    'link' => route('backend.section.destroy', $data->id),
+                    'link' => route('backend.session.destroy', $data->id),
                     'linkLabel' => getLinkLabel('Delete', null, null)
                 ]
 
@@ -94,10 +87,7 @@ class SectionController extends Controller
     {
         return [
             ['fieldName' => 'index', 'class' => 'text-center'],
-            ['fieldName' => 'class_id', 'class' => 'text-center'],
-            ['fieldName' => 'session_id', 'class' => 'text-center'],
-            ['fieldName' => 'name', 'class' => 'text-center'],
-            ['fieldName' => 'total_sit', 'class' => 'text-center'],
+            ['fieldName' => 'session_year', 'class' => 'text-center'],
             ['fieldName' => 'status', 'class' => 'text-center'],
         ];
     }
@@ -105,10 +95,7 @@ class SectionController extends Controller
     {
         return [
             'Sl/No',
-            'Class Name',
             'Session Year',
-            'Name',
-            'total_sit',
             'Status',
             'Action',
         ];
@@ -116,24 +103,20 @@ class SectionController extends Controller
 
     public function create()
     {
-        $classes = $this->classesService->activeList();
-        $sessions = $this->sessionService->activeList();
         return Inertia::render(
-            'Backend/Section/Form',
+            'Backend/Session/Form',
             [
-                'pageTitle' => fn () => 'Section Create',
+                'pageTitle' => fn () => 'Session Create',
                 'breadcrumbs' => fn () => [
-                    ['link' => null, 'title' => 'Section Manage'],
-                    ['link' => route('backend.section.create'), 'title' => 'Section Create'],
+                    ['link' => null, 'title' => 'Session Manage'],
+                    ['link' => route('backend.session.create'), 'title' => 'Session Create'],
                 ],
-                'classes' => fn() => $classes,
-                'sessions' => fn() => $sessions,
             ]
         );
     }
 
 
-    public function store(SectionRequest $request)
+    public function store(SessionRequest $request)
     {
 
         DB::beginTransaction();
@@ -142,11 +125,11 @@ class SectionController extends Controller
             $data = $request->validated();
 
 
-            $dataInfo = $this->sectionService->create($data);
+            $dataInfo = $this->sessionService->create($data);
 
             if ($dataInfo) {
-                $message = 'Section created successfully';
-                $this->storeAdminWorkLog($dataInfo->id, 'sections', $message);
+                $message = 'Session created successfully';
+                $this->storeAdminWorkLog($dataInfo->id, 'sessions', $message);
 
                 DB::commit();
 
@@ -156,7 +139,7 @@ class SectionController extends Controller
             } else {
                 DB::rollBack();
 
-                $message = "Failed To create Section.";
+                $message = "Failed To create Session.";
                 return redirect()
                     ->back()
                     ->with('errorMessage', $message);
@@ -164,7 +147,8 @@ class SectionController extends Controller
         } catch (Exception $err) {
             //   dd($err);
             DB::rollBack();
-            $this->storeSystemError('Backend', 'SectionController', 'store', substr($err->getMessage(), 0, 1000));
+            $this->storeSystemError('Backend', 'SessionController', 'store', substr($err->getMessage(), 0, 1000));
+            //dd($err);
             DB::commit();
             $message = "Server Errors Occur. Please Try Again.";
             // dd($message);
@@ -176,41 +160,57 @@ class SectionController extends Controller
 
     public function edit($id)
     {
-        $section = $this->sectionService->find($id);
-        $classes = $this->classesService->activeList();
-        $sessions = $this->sessionService->activeList();
+        $session = $this->sessionService->find($id);
 
         return Inertia::render(
-            'Backend/Section/Form',
+            'Backend/Session/Form',
             [
-                'pageTitle' => fn () => 'Section Edit',
+                'pageTitle' => fn () => 'Session Edit',
                 'breadcrumbs' => fn () => [
-                    ['link' => null, 'title' => 'Section Manage'],
-                    ['link' => route('backend.section.edit', $id), 'title' => 'Section Edit'],
+                    ['link' => null, 'title' => 'Session Manage'],
+                    ['link' => route('backend.session.edit', $id), 'title' => 'Session Edit'],
                 ],
-                'section' => fn () => $section,
+                'session' => fn () => $session,
                 'id' => fn () => $id,
-                'classes' => fn() => $classes,
-                'sessions' => fn() => $sessions,
             ]
         );
     }
 
-    public function update(SectionRequest $request, $id)
+    public function update(SessionRequest $request, $id)
     {
         DB::beginTransaction();
         try {
 
             $data = $request->validated();
-            $section = $this->sectionService->find($id);
+            $session = $this->sessionService->find($id);
 
-           
+            if ($request->hasFile('image')) {
+                $data['image'] = $this->imageUpload($request->file('image'), 'sessions');
+                $path = strstr($session->image, 'storage/');
+                if (file_exists($path)) {
+                    unlink($path);
+                }
+            } else {
 
-            $dataInfo = $this->sectionService->update($data, $id);
+                $data['image'] = strstr($session->image ?? '', 'sessions');
+            }
+
+            if ($request->hasFile('file')) {
+                $data['file'] = $this->fileUpload($request->file('file'), 'sessions/');
+                $path = strstr($session->file, 'storage/');
+                if (file_exists($path)) {
+                    unlink($path);
+                }
+            } else {
+
+                $data['file'] = strstr($session->file ?? '', 'sessions/');
+            }
+
+            $dataInfo = $this->sessionService->update($data, $id);
 
             if ($dataInfo->save()) {
-                $message = 'Section updated successfully';
-                $this->storeAdminWorkLog($dataInfo->id, 'sections', $message);
+                $message = 'Session updated successfully';
+                $this->storeAdminWorkLog($dataInfo->id, 'sessions', $message);
 
                 DB::commit();
 
@@ -220,14 +220,14 @@ class SectionController extends Controller
             } else {
                 DB::rollBack();
 
-                $message = "Failed To update sections.";
+                $message = "Failed To update sessions.";
                 return redirect()
                     ->back()
                     ->with('errorMessage', $message);
             }
         } catch (Exception $err) {
             DB::rollBack();
-            $this->storeSystemError('Backend', 'SectionController', 'update', substr($err->getMessage(), 0, 1000));
+            $this->storeSystemError('Backend', 'SessionController', 'update', substr($err->getMessage(), 0, 1000));
             DB::commit();
             $message = "Server Errors Occur. Please Try Again.";
             return redirect()
@@ -243,9 +243,9 @@ class SectionController extends Controller
 
         try {
 
-            if ($this->sectionService->delete($id)) {
-                $message = 'Section deleted successfully';
-                $this->storeAdminWorkLog($id, 'sections', $message);
+            if ($this->sessionService->delete($id)) {
+                $message = 'Session deleted successfully';
+                $this->storeAdminWorkLog($id, 'sessions', $message);
 
                 DB::commit();
 
@@ -255,14 +255,14 @@ class SectionController extends Controller
             } else {
                 DB::rollBack();
 
-                $message = "Failed To Delete Section.";
+                $message = "Failed To Delete Session.";
                 return redirect()
                     ->back()
                     ->with('errorMessage', $message);
             }
         } catch (Exception $err) {
             DB::rollBack();
-            $this->storeSystemError('Backend', 'SectionController', 'destroy', substr($err->getMessage(), 0, 1000));
+            $this->storeSystemError('Backend', 'SessionController', 'destroy', substr($err->getMessage(), 0, 1000));
             DB::commit();
             $message = "Server Errors Occur. Please Try Again.";
             return redirect()
@@ -277,11 +277,11 @@ class SectionController extends Controller
 
         try {
 
-            $dataInfo = $this->sectionService->changeStatus($id, $status);
+            $dataInfo = $this->sessionService->changeStatus($id, $status);
 
             if ($dataInfo->wasChanged()) {
-                $message = 'Section ' . request()->status . ' Successfully';
-                $this->storeAdminWorkLog($dataInfo->id, 'sections', $message);
+                $message = 'Session ' . request()->status . ' Successfully';
+                $this->storeAdminWorkLog($dataInfo->id, 'sessions', $message);
 
                 DB::commit();
 
@@ -291,14 +291,14 @@ class SectionController extends Controller
             } else {
                 DB::rollBack();
 
-                $message = "Failed To " . request()->status . "Section.";
+                $message = "Failed To " . request()->status . "Session.";
                 return redirect()
                     ->back()
                     ->with('errorMessage', $message);
             }
         } catch (Exception $err) {
             DB::rollBack();
-            $this->storeSystemError('Backend', 'SectionController', 'changeStatus', substr($err->getMessage(), 0, 1000));
+            $this->storeSystemError('Backend', 'SessionController', 'changeStatus', substr($err->getMessage(), 0, 1000));
             DB::commit();
             $message = "Server Errors Occur. Please Try Again.";
             return redirect()

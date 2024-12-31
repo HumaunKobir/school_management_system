@@ -40,6 +40,9 @@ use Illuminate\Support\Facades\Route;
 	use App\Http\Controllers\Backend\GroupController;
 
 
+	use App\Http\Controllers\Backend\SessionController;
+
+
 	//don't remove this comment from route namespace
 
 /*
@@ -215,6 +218,11 @@ Route::group(['middleware' => 'AdminAuth'], function () {
 	    //for Group
     Route::resource('group', GroupController::class);
     Route::get('group/{id}/status/{status}/change', [GroupController::class, 'changeStatus'])->name('group.status.change');
+
+
+	    //for Session
+    Route::resource('session', SessionController::class);
+    Route::get('session/{id}/status/{status}/change', [SessionController::class, 'changeStatus'])->name('session.status.change');
 
 
 	//don't remove this comment from route body

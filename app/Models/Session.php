@@ -7,18 +7,14 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Traits\HasRoles;
 
-class Section extends Authenticatable
+class Session extends Authenticatable
 {
     use Notifiable,HasFactory;
 
-    protected $table = 'sections';
+    protected $table = 'sessionsyear';
 
     protected $fillable = [
-                    'id',
-                    'session_id',
-                    'class_id',
-                    'name',
-                    'total_sit'
+                    'session_year',
                 ];
 
     protected static function boot()
@@ -32,26 +28,7 @@ class Section extends Authenticatable
             $model->updated_at = date('Y-m-d H:i:s');
         });
     }
-    public function session()
-    {
-        return $this->belongsTo(Session::class, 'session_id','id');
-    }
-    public function sessions()
-    {
-        return $this->hasMany(Session::class, 'session_id','id');
-    }
-    public function students()
-    {
-        return $this->hasMany(Student::class);
-    }
-    public function class()
-    {
-        return $this->belongsTo(Classes::class, 'class_id','id');
-    }
-    public function classes()
-    {
-        return $this->hasMany(Classes::class, 'class_id','id');
-    }
+
     public function getImageAttribute($value)
     {
         return (!is_null($value)) ? env('APP_URL') . '/public/storage/' . $value : null;

@@ -15,10 +15,12 @@
         {
             Schema::create('classroutines', function (Blueprint $table) {
                 $table->id();
+                $table->unsignedBigInteger('session_id')->nullable();
                 $table->unsignedBigInteger('class_id')->nullable();
                 $table->unsignedBigInteger('section_id')->nullable();
                 $table->unsignedBigInteger('group_id')->nullable();
                 $table->unsignedBigInteger('subject_id')->nullable();
+                $table->unsignedBigInteger('teacher_id')->nullable();
                 $table->unsignedBigInteger('room_id')->nullable();
                 $table->string('day');
                 $table->string('start_time');
@@ -26,9 +28,11 @@
                 $table->enum('status',['Active','Inactive','Deleted'])->default('Active');
                 $table->softDeletes();
                 $table->timestamps();
+                $table->foreign('session_id')->references('id')->on('sessionsyear')->onDelete('cascade');
                 $table->foreign('class_id')->references('id')->on('classes')->onDelete('cascade');
                 $table->foreign('section_id')->references('id')->on('sections')->onDelete('cascade');
                 $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade');
+                $table->foreign('teacher_id')->references('id')->on('teachers')->onDelete('cascade');
                 $table->foreign('subject_id')->references('id')->on('subjects')->onDelete('cascade');
                 $table->foreign('room_id')->references('id')->on('classrooms')->onDelete('cascade');
             });

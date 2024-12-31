@@ -40,10 +40,13 @@
         try {
             const responses = await axios.get(route("backend.group.byClass", { classId }));
             filteredGroups.value = responses.data;
-            const response = await axios.get(route("backend.section.byClass", { classId }));
-            filteredSections.value = response.data;
-        } catch (error) {
-            displayWarning({ message: "Failed to load groups." });
+            const sectionResponse = await axios.get(route("backend.section.byClass", { classId }));
+            filteredSections.value = sectionResponse.data.map(section => ({
+            ...section,
+            isFull: section.current_students >= section.total_sit,
+        }));
+    } catch (error) {
+        displayWarning({ message: "Failed to load groups or sections." });
         }
     };
     const handlePhotoChange = (event) => {
@@ -107,15 +110,16 @@
                             </select>
                             <InputError class="mt-2" :message="form.errors.class_id" />
                         </div>
-
                         <div class="col-span-1 md:col-span-2">
-                            <InputLabel for="section_id" value="Section" />
+                            <InputLabel for="class_id" value="Class" />
                             <select id="section_id" class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
                                 v-model="form.section_id">
                                 <option value="">Select Section</option>
-                                <option v-for="section in filteredSections" :key="section.id" :value="section.id">{{ section.name }}</option>
+                                <option v-for="section in filteredSections" :key="section.id" :value="section.id" 
+                                    :disabled="section.isFull">
+                                    {{ section.name }} ({{ section.current_students }}/{{ section.total_sit }})
+                                </option>
                             </select>
-                            <InputError class="mt-2" :message="form.errors.section_id" />
                         </div>
 
                         <!-- Group ID -->

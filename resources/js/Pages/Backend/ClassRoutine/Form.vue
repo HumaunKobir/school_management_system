@@ -10,12 +10,13 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import AlertMessage from '@/Components/AlertMessage.vue';
 import { displayResponse, displayWarning } from '@/responseMessage.js';
 
-const props = defineProps(['classroutine', 'id', 'classes', 'sections', 'rooms', 'groups', 'subjects']);
+const props = defineProps(['classroutine', 'id', 'classes', 'sections', 'rooms', 'groups', 'subjects','teachers']);
 
 const form = useForm({
     class_id: props.classroutine?.class_id ?? '',
     section_id: props.classroutine?.section_id ?? '',
     group_id: props.classroutine?.group_id ?? '',
+    teacher_id: props.classroutine?.teacher_id ?? '',
     subject_id: props.classroutine?.subject_id ?? '',
     room_id: props.classroutine?.room_id ?? '',
     day: props.classroutine?.day ?? '',
@@ -126,7 +127,16 @@ const submit = () => {
                         </select>
                         <InputError class="mt-2" :message="form.errors.group_id" />
                     </div>
-
+                    <!-- Teacher Selection -->
+                    <div class="col-span-1 md:col-span-2">
+                        <InputLabel for="teacher_id" value="Teacher" />
+                        <select id="teacher_id" class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
+                            v-model="form.teacher_id">
+                            <option value="">Select Teacher</option>
+                            <option v-for="teacher in teachers" :key="teacher.id" :value="teacher.id">{{ teacher.name }}</option>
+                        </select>
+                        <InputError class="mt-2" :message="form.errors.teacher_id" />
+                    </div>
                     <!-- Subject Selection -->
                     <div class="col-span-1 md:col-span-2">
                         <InputLabel for="subject_id" value="Subject" />

@@ -24,6 +24,7 @@ class Student extends Authenticatable
                     'date_of_birth',
                     'admission_date',
                     'photo',
+                    'session_id',
                     'class_id',
                     'section_id',
                     'group_id',
@@ -41,6 +42,14 @@ class Student extends Authenticatable
         static::updating(function ($model) {
             $model->updated_at = date('Y-m-d H:i:s');
         });
+    }    
+    public function session()
+    {
+        return $this->belongsTo(Session::class, 'session_id','id');
+    }
+    public function sessions()
+    {
+        return $this->hasMany(Session::class, 'session_id','id');
     }
     public function class()
     {

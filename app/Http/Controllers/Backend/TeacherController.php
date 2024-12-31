@@ -173,10 +173,10 @@ class TeacherController extends Controller
             $data['teacher_id'] = $year . $uniqueNumber;
 
             if ($request->hasFile('photo'))
-                $data['photo'] = $this->imageUpload($request->file('photo'), 'teachers');
+                $data['photo'] = $this->imageUpload($request->file('photo'), 'teacherImage');
 
             if ($request->hasFile('file'))
-                $data['file'] = $this->fileUpload($request->file('file'), 'teachersCv');
+                $data['file'] = $this->fileUpload($request->file('file'), 'teachersFile');
 
 
             $dataInfo = $this->teacherService->create($data);
@@ -238,26 +238,15 @@ class TeacherController extends Controller
             $data = $request->validated();
             $teacher = $this->teacherService->find($id);
 
-            if ($request->hasFile('image')) {
-                $data['image'] = $this->imageUpload($request->file('image'), 'teachers');
-                $path = strstr($teacher->image, 'storage/');
-                if (file_exists($path)) {
-                    unlink($path);
-                }
+            if ($request->hasFile('photo')) {
+                $data['photo'] = $this->imageUpload($request->photo, 'teacherImage');
             } else {
-
-                $data['image'] = strstr($teacher->image ?? '', 'teachers');
+                $data['photo'] = strstr($teacher->photo ?? '', 'teacherImage/');
             }
-
             if ($request->hasFile('file')) {
-                $data['file'] = $this->fileUpload($request->file('file'), 'teachers/');
-                $path = strstr($teacher->file, 'storage/');
-                if (file_exists($path)) {
-                    unlink($path);
-                }
+                $data['file'] = $this->fileUpload($request->file, 'teacherFile');
             } else {
-
-                $data['file'] = strstr($teacher->file ?? '', 'teachers/');
+                $data['file'] = strstr($teacher->file ?? '', 'teacherFile/');
             }
 
             $dataInfo = $this->teacherService->update($data, $id);

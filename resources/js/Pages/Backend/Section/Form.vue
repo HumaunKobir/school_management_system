@@ -10,9 +10,10 @@
     import AlertMessage from '@/Components/AlertMessage.vue';
     import { displayResponse, displayWarning } from '@/responseMessage.js';
 
-    const props = defineProps(['section', 'id','classes']);
+    const props = defineProps(['section', 'id','classes','sessions']);
 
     const form = useForm({
+        session_id: props.section?.session_id ?? '',
         class_id: props.section?.class_id ?? '',
         name: props.section?.name ?? '',
         total_sit: props.section?.total_sit ?? '',
@@ -78,6 +79,15 @@
                                 <option v-for="classe in classes" :key="classe.id" :value="classe.id">{{ classe.name }}</option>
                             </select>
                             <InputError class="mt-2" :message="form.errors.class_id" />
+                        </div>
+                        <div class="col-span-1 md:col-span-2">
+                            <InputLabel for="session_id" value="Session Year" />
+                            <select id="session_id" class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
+                                v-model="form.session_id">
+                                <option value="">Select Session</option>
+                                <option v-for="session in sessions" :key="session.id" :value="session.id">{{ session.session_year }}</option>
+                            </select>
+                            <InputError class="mt-2" :message="form.errors.session_id" />
                         </div>
                         <div class="col-span-1 md:col-span-1">
                             <InputLabel for="name" value="Section Name" />

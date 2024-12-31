@@ -79,7 +79,7 @@
                     </div>
                     <div class="p-4 py-2">
                     </div>
-                </div>@change="fetchSubjectsByGroup(form.group_id)"
+                </div>
 
                 <form @submit.prevent="submit" class="p-4">
                     <AlertMessage />

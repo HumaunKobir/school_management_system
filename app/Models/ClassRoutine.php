@@ -14,9 +14,11 @@ class ClassRoutine extends Authenticatable
     protected $table = 'classroutines';
 
     protected $fillable = [
+                    'session_id',
                     'class_id',
                     'section_id',
                     'group_id',
+                    'teacher_id',
                     'subject_id',
                     'room_id',
                     'day',
@@ -35,7 +37,14 @@ class ClassRoutine extends Authenticatable
             $model->updated_at = date('Y-m-d H:i:s');
         });
     }
-
+    public function session()
+    {
+        return $this->belongsTo(Session::class, 'session_id','id');
+    }
+    public function sessions()
+    {
+        return $this->hasMany(Session::class, 'session_id','id');
+    }
     public function class()
     {
         return $this->belongsTo(Classes::class, 'class_id','id');
@@ -61,6 +70,14 @@ class ClassRoutine extends Authenticatable
     public function groups()
     {
         return $this->hasMany(Group::class, 'group_id','id');
+    } 
+    public function teacher()
+    {
+        return $this->belongsTo(Teacher::class, 'teacher_id','id');
+    }
+    public function teachers()
+    {
+        return $this->hasMany(Teacher::class, 'teacher_id','id');
     }
     public function subject()
     {

@@ -11,9 +11,11 @@ class ClassRoutineRequest extends FormRequest
         switch ($this->method()) {
             case 'POST':
                 return [
+                    'session_id' => 'required|max:255',
                     'class_id' => 'required|max:255',
                     'section_id' => 'required|max:255',
                     'group_id' => 'required|max:255',
+                    'teacher_id' => 'required|max:255',
                     'subject_id' => 'required|max:255',
                     'room_id' => 'required|max:255',
                     'day' => 'required|string|max:255',
@@ -24,9 +26,11 @@ class ClassRoutineRequest extends FormRequest
 
             case 'PUT':
                 return [
+                    'session_id' => 'required|max:255',
                     'class_id' => 'required|max:255',
                     'section_id' => 'required|max:255',
                     'group_id' => 'required|max:255',
+                    'teacher_id' => 'required|max:255',
                     'subject_id' => 'required|max:255',
                     'room_id' => 'required|max:255',
                     'day' => 'required|string|max:255',
@@ -49,9 +53,11 @@ class ClassRoutineRequest extends FormRequest
     {
 
         return [
+            'session_id.required' => __('The session field is required.'),
             'class_id.required' => __('The first name field is required.'),
             'section_id.required' => __('The section field is required.'),
             'group_id.required' => __('The group field is required.'),
+            'teacher_id.required' => __('The teacher field is required.'),
             'subject_id.required' => __('The subject field is required.'),
             'room_id.required' => __('The froom field is required.'),
             'day.required' => __('The day field is required.'),

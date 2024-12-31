@@ -41,7 +41,7 @@ class Teacher extends Authenticatable
         });
     }
 
-    public function getImageAttribute($value)
+    public function getPhotoAttribute($value)
     {
         return (!is_null($value)) ? env('APP_URL') . '/public/storage/' . $value : null;
     }

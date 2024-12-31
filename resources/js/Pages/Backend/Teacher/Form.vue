@@ -24,6 +24,10 @@
         jonning_date: props.teacher?.jonning_date ?? '',
         photo: props.teacher?.photo ?? '',
         password: props.teacher?.password ?? '',
+        file: props.teacher?.file ?? '',
+
+        imagePreview: props.teacher?.photo ?? "",
+        filePreview: props.teacher?.file ?? "",
         _method: props.teacher?.id ? 'put' : 'post',
     });
 

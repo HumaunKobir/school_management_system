@@ -913,6 +913,37 @@ class MenuSeeder extends Seeder
     ],
 
 
+	    [
+        'name' => 'Session Manage',
+        'icon' => 'layers',
+        'route' => null,
+        'description' => null,
+        'sorting' => 1,
+        'permission_name' => 'session-management',
+        'status' => 'Active',
+        'children' => [
+            [
+                'name' => 'Session Add',
+                'icon' => 'plus-circle',
+                'route' => 'backend.session.create',
+                'description' => null,
+                'sorting' => 1,
+                'permission_name' => 'session-add',
+                'status' => 'Active',
+            ],
+            [
+                'name' => 'Session List',
+                'icon' => 'list',
+                'route' => 'backend.session.index',
+                'description' => null,
+                'sorting' => 1,
+                'permission_name' => 'session-list',
+                'status' => 'Active',
+            ],
+        ],
+    ],
+
+
 	//don't remove this comment from menu seeder
         ];
     }

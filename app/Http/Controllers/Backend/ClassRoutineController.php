@@ -5,9 +5,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ClassRoutineRequest;
 use Illuminate\Support\Facades\DB;
 use App\Services\ClassRoutineService;
+use App\Services\SessionService;
 use App\Services\ClassesService;
 use App\Services\SectionService;
 use App\Services\GroupService;
+use App\Services\TeacherService;
 use App\Services\SubjectService;
 use App\Services\ClassRoomService;
 use App\Models\Group;
@@ -24,14 +26,16 @@ class ClassRoutineController extends Controller
 {
     use SystemTrait;
 
-    protected $classroutineService,$classesService,$sectionService,$groupService,$subjectService,$classRoomService;
+    protected $classroutineService,$sessionService, $classesService,$sectionService,$groupService,$subjectService,$classRoomService,$teacherService;
 
-    public function __construct(ClassRoutineService $classroutineService,ClassesService $classesService,SectionService $sectionService,GroupService $groupService,SubjectService $subjectService,ClassRoomService $classRoomService)
+    public function __construct(ClassRoutineService $classroutineService,SessionService $sessionService, ClassesService $classesService,SectionService $sectionService,GroupService $groupService,SubjectService $subjectService,ClassRoomService $classRoomService, TeacherService $teacherService)
     {
         $this->classroutineService = $classroutineService;
+        $this->sessionService = $sessionService;
         $this->classesService = $classesService;
         $this->sectionService = $sectionService;
         $this->groupService = $groupService;
+        $this->teacherService = $teacherService;
         $this->subjectService = $subjectService;
         $this->classRoomService = $classRoomService;
     }
@@ -68,14 +72,16 @@ class ClassRoutineController extends Controller
         $formatedDatas = $datas->map(function ($data, $index) {
             $customData = new \stdClass();
             $customData->index = $index + 1;
-            $customData->class_id = $data->class->name;
-            $customData->section_id = $data->section->name;
-            $customData->group_id = $data->group->name;
-            $customData->subject_id = $data->subject->name;
-            $customData->room_id = $data->classRoom->room_number;
-            $customData->day = $data->day;
-            $customData->start_time = $data->start_time;
-            $customData->end_time = $data->end_time;
+            $customData->session_id = $data->session->session_year ?? '';
+            $customData->class_id = $data->class->name ?? '';
+            $customData->section_id = $data->section->name ?? '';
+            $customData->group_id = $data->group->name ?? '';
+            $customData->teacher_id = $data->teacher->name ?? '';
+            $customData->subject_id = $data->subject->name ?? '';
+            $customData->room_id = $data->classRoom->room_number ?? '';
+            $customData->day = $data->day ?? '';
+            $customData->start_time = $data->start_time ?? '';
+            $customData->end_time = $data->end_time ?? '';
             $customData->status = getStatusText($data->status);
 
             $customData->hasLink = true;
@@ -107,9 +113,11 @@ class ClassRoutineController extends Controller
     {
         return [
             ['fieldName' => 'index', 'class' => 'text-center'],
+            ['fieldName' => 'session_id', 'class' => 'text-center'],
             ['fieldName' => 'class_id', 'class' => 'text-center'],
             ['fieldName' => 'section_id', 'class' => 'text-center'],
             ['fieldName' => 'group_id', 'class' => 'text-center'],
+            ['fieldName' => 'teacher_id', 'class' => 'text-center'],
             ['fieldName' => 'subject_id', 'class' => 'text-center'],
             ['fieldName' => 'room_id', 'class' => 'text-center'],
             ['fieldName' => 'day', 'class' => 'text-center'],
@@ -122,9 +130,11 @@ class ClassRoutineController extends Controller
     {
         return [
             'Sl/No',
+            'Session Year',
             'Class Name',
             'Section',
             'Group',
+            'Teacher',
             'Subject',
             'Room Number',
             'Day',
@@ -137,9 +147,11 @@ class ClassRoutineController extends Controller
 
     public function create()
     {
+        $sessions = $this->sessionService->activeList();
         $classes = $this->classesService->activeList();
         $sections = $this->sectionService->activeList();
         $groups = $this->groupService->activeList();
+        $teachers = $this->teacherService->activeList();
         $subjects = $this->subjectService->activeList();
         $rooms = $this->classRoomService->activeList();
         return Inertia::render(
@@ -150,9 +162,11 @@ class ClassRoutineController extends Controller
                     ['link' => null, 'title' => 'ClassRoutine Manage'],
                     ['link' => route('backend.classroutine.create'), 'title' => 'ClassRoutine Create'],
                 ],
+                'sessions' => fn() => $sessions,
                 'classes' => fn() => $classes,
                 'sections' => fn() => $sections,
                 'groups' => fn() => $groups,
+                'teachers' => fn() => $teachers,
                 'subjects' => fn() => $subjects,
                 'rooms' => fn() => $rooms,
             ]
@@ -204,9 +218,11 @@ class ClassRoutineController extends Controller
     public function edit($id)
     {
         $classroutine = $this->classroutineService->find($id);
+        $sessions = $this->sessionService->activeList();
         $classes = $this->classesService->activeList();
         $sections = $this->sectionService->activeList();
         $groups = $this->groupService->activeList();
+        $teachers = $this->teacherService->activeList();
         $subjects = $this->subjectService->activeList();
         $rooms = $this->classRoomService->activeList();
 
@@ -220,9 +236,11 @@ class ClassRoutineController extends Controller
                 ],
                 'classroutine' => fn () => $classroutine,
                 'id' => fn () => $id,
+                'sessions' => fn() => $sessions,
                 'classes' => fn() => $classes,
                 'sections' => fn() => $sections,
                 'groups' => fn() => $groups,
+                'teachers' => fn() => $teachers,
                 'subjects' => fn() => $subjects,
                 'rooms' => fn() => $rooms,
             ]

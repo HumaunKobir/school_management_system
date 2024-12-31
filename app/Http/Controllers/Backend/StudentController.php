@@ -5,11 +5,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StudentRequest;
 use Illuminate\Support\Facades\DB;
 use App\Services\StudentService;
+use App\Services\SessionService;
 use App\Services\ClassesService;
 use App\Services\SectionService;
 use App\Services\GroupService;
 use App\Models\Group;
 use App\Models\Section;
+use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
@@ -21,11 +23,12 @@ class StudentController extends Controller
 {
     use SystemTrait;
 
-    protected $studentService,$classesService,$sectionService,$groupService;
+    protected $studentService,$classesService,$sectionService,$groupService,$sessionService;
 
-    public function __construct(StudentService $studentService, ClassesService $classesService,SectionService $sectionService,GroupService $groupService,)
+    public function __construct(StudentService $studentService, ClassesService $classesService,SectionService $sectionService,GroupService $groupService,SessionService $sessionService)
     {
         $this->studentService = $studentService;
+        $this->sessionService = $sessionService;
         $this->classesService = $classesService;
         $this->sectionService = $sectionService;
         $this->groupService = $groupService;
@@ -72,6 +75,7 @@ class StudentController extends Controller
             $customData->address = $data->address;
             $customData->date_of_birth = $data->date_of_birth;
             $customData->admission_date = $data->admission_date;
+            $customData->session_id = $data->session->session_year;
             $customData->class_id = $data->class->name;
             $customData->section_id = $data->section->name;
             $customData->group_id = $data->group->name;
@@ -117,6 +121,7 @@ class StudentController extends Controller
             ['fieldName' => 'date_of_birth', 'class' => 'text-center'],
             ['fieldName' => 'admission_date', 'class' => 'text-center'],
             ['fieldName' => 'photo', 'class' => 'text-center'],
+            ['fieldName' => 'session_id', 'class' => 'text-center'],
             ['fieldName' => 'class_id', 'class' => 'text-center'],
             ['fieldName' => 'section_id', 'class' => 'text-center'],
             ['fieldName' => 'group_id', 'class' => 'text-center'],
@@ -137,6 +142,7 @@ class StudentController extends Controller
             'Date Of Birth',
             'Admission Date',
             'Photo',
+            'Session Year',
             'Class Name',
             'Section Name',
             'Group Name',
@@ -148,6 +154,7 @@ class StudentController extends Controller
     public function create()
     {
         $classes = $this->classesService->activeList();
+        $sessions = $this->sessionService->activeList();
         return Inertia::render(
             'Backend/Student/Form',
             [
@@ -156,6 +163,7 @@ class StudentController extends Controller
                     ['link' => null, 'title' => 'Student Manage'],
                     ['link' => route('backend.student.create'), 'title' => 'Student Create'],
                 ],
+                'sessions' => fn() => $sessions,
                 'classes' => fn() => $classes,
             ]
         );
@@ -192,7 +200,11 @@ class StudentController extends Controller
             if ($request->hasFile('file'))
                 $data['file'] = $this->fileUpload($request->file('file'), 'students');
 
+            $section = Section::find($request->section_id);
 
+            if ($section->students()->count() >= $section->total_sit) {
+                return back()->withErrors(['section_id' => 'The selected section is full.']);
+            }
             $dataInfo = $this->studentService->create($data);
 
             if ($dataInfo) {
@@ -229,6 +241,7 @@ class StudentController extends Controller
     public function edit($id)
     {
         $student = $this->studentService->find($id);
+        $sessions = $this->sessionService->activeList();
         $classes = $this->classesService->activeList();
         $sections = $this->sectionService->findByClassId($student->class_id);
         $groups = $this->groupService->findByClassId($student->class_id);
@@ -243,6 +256,7 @@ class StudentController extends Controller
                 ],
                 'student' => fn () => $student,
                 'id' => fn () => $id,
+                'sessions' => fn () => $sessions,
                 'classes' => fn () => $classes,
                 'sections' => fn() => $sections,
                 'groups' => fn() => $groups,
@@ -377,7 +391,14 @@ class StudentController extends Controller
     }
     public function getSectionsByClass($classId)
     {
-        $sections = Section::where('class_id', $classId)->get();
-        return response()->json($sections);
+        $sections = Section::where('class_id', $classId)->withCount('students')->get();
+        return response()->json($sections->map(function ($section) {
+            return [
+                'id' => $section->id,
+                'name' => $section->name,
+                'total_sit' => $section->total_sit,
+                'current_students' => $section->students_count,
+            ];
+        }));
     }
 }
