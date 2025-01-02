@@ -131,7 +131,11 @@ Route::group(['middleware' => 'AdminAuth'], function () {
         //for Attendance
     Route::resource('attendance', AttendanceController::class);
     Route::get('attendance/{id}/status/{status}/change', [AttendanceController::class, 'changeStatus'])->name('attendance.status.change');
-
+    Route::get('/teachers/{sessionId}', [AttendanceController::class, 'getTeachersBySession']);
+    Route::get('/classes/{sessionId}/{teacherId}', [AttendanceController::class, 'getClassesByTeacher']);
+    Route::get('/sections/{classId}', [AttendanceController::class, 'getSectionsByClass']);
+    Route::get('/subjects/{sectionId}', [AttendanceController::class, 'getSubjectsBySection']);
+    Route::get('/students/{sessionId}/{classId}/{sectionId}', [AttendanceController::class, 'filterStudents']);
 
         //for Event
     Route::resource('event', EventController::class);

@@ -4,57 +4,21 @@
     import { ref, onMounted } from 'vue';
     import BackendLayout from '@/Layouts/BackendLayout.vue';
     import { router, useForm, usePage } from '@inertiajs/vue3';
+    import BarChart from '@/Components/Chart/BarChart.vue';
+    import PieChart from '@/Components/Chart/PieChart.vue';
     import InputError from '@/Components/InputError.vue';
     import InputLabel from '@/Components/InputLabel.vue';
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import AlertMessage from '@/Components/AlertMessage.vue';
     import { displayResponse, displayWarning } from '@/responseMessage.js';
 
-    const props = defineProps(['attendance', 'id']);
+    const props = defineProps(['sessions']);
 
-    const form = useForm({
-        name: props.attendance?.name ?? '',
-        _method: props.attendance?.id ? 'put' : 'post',
-    });
 
-    const handlePhotoChange = (event) => {
-        const file = event.target.files[0];
-        form.photo = file;
-
-        // Display photo preview
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            form.photoPreview = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    };
-
-    const submit = () => {
-        const routeName = props.id ? route('backend.attendance.update', props.id) : route('backend.attendance.store');
-        form.transform(data => ({
-            ...data,
-            remember: '',
-            isDirty: false,
-        })).post(routeName, {
-
-            onSuccess: (response) => {
-                if (!props.id)
-                    form.reset();
-                displayResponse(response);
-            },
-            onError: (errorObject) => {
-
-                displayWarning(errorObject);
-            },
-        });
-    };
-
-    </script>
+</script>
 
     <template>
         <BackendLayout>
-            <div
-                class="w-full mt-3 transition duration-1000 ease-in-out transform bg-white border border-gray-700 rounded-md shadow-lg shadow-gray-800/50 dark:bg-slate-900">
 
                 <div
                     class="flex items-center justify-between w-full text-gray-700 bg-gray-100 rounded-md shadow-md dark:bg-gray-800 dark:text-gray-200 shadow-gray-800/50">
@@ -65,40 +29,44 @@
                     </div>
                 </div>
 
-                <form @submit.prevent="submit" class="p-4">
-                    <AlertMessage />
-                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
+                <section class="w-full mt-4 transition duration-1000 ease-in-out">
+                    <div class="grid gap-4 xs:grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                        <div class="w-full h-20 pl-1 bg-yellow-400 rounded-lg shadow-md" v-for="session in sessions" :key="session.id" :value="session.id">
+                            <a href="{{ route('backend.attendance.class.section') }}">
+                                <div class="flex justify-between w-full h-full px-4 py-2 bg-white rounded-lg">
+                                    <div class="my-auto">
+                                        <p class="text-sm font-bold sm:text-md">{{ session.session_year}}</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </section>
 
-                        <div class="col-span-1 md:col-span-2">
-                            <InputLabel for="photo" value="Photo" />
-                            <div v-if="form.photoPreview">
-                                <img :src="form.photoPreview" alt="Photo Preview" class="max-w-xs mt-2" height="60"
-                                    width="60" />
+                <section class="grid gap-4 mt-4 md:grid-cols-2 xl:grid-cols-4">
+                    <div class="flex flex-col bg-white rounded-lg shadow md:col-span-2 md:row-span-2">
+                        <div class="px-6 py-5 font-semibold border-b border-gray-100">The Attendance and left Employee per month
+                        </div>
+                        <div class="flex-grow p-4">
+                            <div
+                                class="flex items-center justify-center h-full px-4 py-16 text-3xl font-semibold text-gray-400 bg-gray-100 border-2 border-gray-200 border-dashed rounded-md">
+                                <BarChart />
                             </div>
-                            <input id="photo" type="file" accept="image/*"
-                                class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
-                                @change="handlePhotoChange" />
-                            <InputError class="mt-2" :message="form.errors.photo" />
                         </div>
+                    </div>
 
-                        <div class="col-span-1 md:col-span-1">
-                            <InputLabel for="first_name" value="First Name" />
-                            <input id="first_name"
-                                class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
-                                v-model="form.first_name" type="text" placeholder="First Name" />
-                            <InputError class="mt-2" :message="form.errors.first_name" />
+                    <div class="flex flex-col bg-white rounded-lg shadow md:col-span-2 md:row-span-2">
+                        <div class="px-6 py-5 font-semibold border-b border-gray-100">The Attendance and left Employee per month
                         </div>
-
+                        <div class="flex-grow p-4">
+                            <div
+                                class="flex items-center justify-center h-full px-4 py-16 text-3xl font-semibold text-gray-400 bg-gray-100 border-2 border-gray-200 border-dashed rounded-md">
+                                <PieChart />
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex items-center justify-end mt-4">
-                        <PrimaryButton type="submit" class="ms-4" :class="{ 'opacity-25': form.processing }"
-                            :disabled="form.processing">
-                            {{ ((props.id ?? false) ? 'Update' : 'Create') }}
-                        </PrimaryButton>
-                    </div>
-                </form>
 
-            </div>
+                </section>
         </BackendLayout>
     </template>
 

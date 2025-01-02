@@ -10,9 +10,10 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import AlertMessage from '@/Components/AlertMessage.vue';
 import { displayResponse, displayWarning } from '@/responseMessage.js';
 
-const props = defineProps(['classroutine', 'id', 'classes', 'sections', 'rooms', 'groups', 'subjects','teachers']);
+const props = defineProps(['classroutine', 'id','sessions', 'classes', 'sections', 'rooms', 'groups', 'subjects','teachers']);
 
 const form = useForm({
+    session_id: props.classroutine?.session_id ?? '',
     class_id: props.classroutine?.class_id ?? '',
     section_id: props.classroutine?.section_id ?? '',
     group_id: props.classroutine?.group_id ?? '',
@@ -95,7 +96,15 @@ const submit = () => {
                 <form @submit.prevent="submit" class="p-4">
                     <AlertMessage />
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
-                        
+                        <div class="col-span-1 md:col-span-2">
+                            <InputLabel for="session_id" value="Session Year" />
+                            <select id="session_id" class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
+                                v-model="form.session_id">
+                                <option value="">Select Session</option>
+                                <option v-for="session in sessions" :key="session.id" :value="session.id">{{ session.session_year }}</option>
+                            </select>
+                            <InputError class="mt-2" :message="form.errors.session_id" />
+                        </div>
                         <div class="col-span-1 md:col-span-2">
                             <InputLabel for="class_id" value="Class" />
                             <select id="class_id" class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"

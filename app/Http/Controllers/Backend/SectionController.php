@@ -60,7 +60,6 @@ class SectionController extends Controller
             $customData = new \stdClass();
             $customData->index = $index + 1;
             $customData->class_id = $data->class->name;
-            $customData->session_id = $data->session->session_year;
             $customData->name = $data->name;
             $customData->total_sit = $data->total_sit;
             $customData->status = getStatusText($data->status);
@@ -95,7 +94,6 @@ class SectionController extends Controller
         return [
             ['fieldName' => 'index', 'class' => 'text-center'],
             ['fieldName' => 'class_id', 'class' => 'text-center'],
-            ['fieldName' => 'session_id', 'class' => 'text-center'],
             ['fieldName' => 'name', 'class' => 'text-center'],
             ['fieldName' => 'total_sit', 'class' => 'text-center'],
             ['fieldName' => 'status', 'class' => 'text-center'],
@@ -106,7 +104,6 @@ class SectionController extends Controller
         return [
             'Sl/No',
             'Class Name',
-            'Session Year',
             'Name',
             'total_sit',
             'Status',

@@ -13,27 +13,27 @@ class ClassRoutineService
 
     public function list()
     {
-        return  $this->classroutineModel->with('class','group','section','subject','classRoom')->whereNull('deleted_at');
+        return  $this->classroutineModel->whereNull('deleted_at');
     }
 
     public function all()
     {
-        return  $this->classroutineModel->with('class','group','section','subject','classRoom')->whereNull('deleted_at')->all();
+        return  $this->classroutineModel->whereNull('deleted_at')->all();
     }
 
     public function find($id)
     {
-        return  $this->classroutineModel->with('class','group','section','subject','classRoom')->find($id);
+        return  $this->classroutineModel->find($id);
     }
 
     public function create(array $data)
     {
-        return  $this->classroutineModel->with('class','group','section','subject','classRoom')->create($data);
+        return  $this->classroutineModel->create($data);
     }
 
     public function update(array $data, $id)
     {
-        $dataInfo =  $this->classroutineModel->with('class','group','section','subject','classRoom')->findOrFail($id);
+        $dataInfo =  $this->classroutineModel->findOrFail($id);
 
         $dataInfo->update($data);
 
@@ -42,7 +42,7 @@ class ClassRoutineService
 
     public function delete($id)
     {
-        $dataInfo =  $this->classroutineModel->with('class','group','section','subject','classRoom')->find($id);
+        $dataInfo =  $this->classroutineModel->find($id);
 
         if (!empty($dataInfo)) {
 
@@ -57,7 +57,7 @@ class ClassRoutineService
 
     public function changeStatus($id,$status)
     {
-        $dataInfo =  $this->classroutineModel->with('class','group','section','subject','classRoom')->findOrFail($id);
+        $dataInfo =  $this->classroutineModel->findOrFail($id);
         $dataInfo->status = $status;
         $dataInfo->update();
 
@@ -77,8 +77,50 @@ class ClassRoutineService
 
     public function activeList()
     {
-        return  $this->classroutineModel->with('class','group','section','subject','classRoom')->whereNull('deleted_at')->where('status', 'Active')->get();
+        return  $this->classroutineModel->with('session','class','section')->whereNull('deleted_at')->where('status', 'Active')->get();
+    }
+    public function getTeachersBySession($sessionId)
+    {
+        // Query to retrieve teachers based on session ID
+        return ClassRoutine::where('session_id', $sessionId)
+            ->with('teacher')
+            ->get()
+            ->pluck('teacher')
+            ->unique('id')
+            ->values();
     }
 
+    public function getClassesByTeacher($sessionId, $teacherId)
+    {
+        // Query to retrieve classes based on session ID and teacher ID
+        return ClassRoutine::where('session_id', $sessionId)
+            ->where('teacher_id', $teacherId)
+            ->with('class')
+            ->get()
+            ->pluck('class')
+            ->unique('id')
+            ->values();
+    }
+
+    public function getSectionsByClass($classId)
+    {
+        // Query to retrieve sections based on class ID
+        return ClassRoutine::where('class_id', $classId)
+            ->with('section')
+            ->get()
+            ->pluck('section')
+            ->unique('id')
+            ->values();
+    }
+    public function getSubjectsBySection($sectionId)
+    {
+        // Query to retrieve sections based on class ID
+        return ClassRoutine::where('section_id', $sectionId)
+            ->with('subject')
+            ->get()
+            ->pluck('subject')
+            ->unique('id')
+            ->values();
+    }
 }
 

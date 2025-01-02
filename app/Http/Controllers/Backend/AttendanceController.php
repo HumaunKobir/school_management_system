@@ -5,6 +5,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AttendanceRequest;
 use Illuminate\Support\Facades\DB;
 use App\Services\AttendanceService;
+use App\Services\SessionService;
+use App\Services\ClassRoutineService;
+use App\Services\TeacherService;
+use App\Services\SubjectService;
+use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
@@ -16,11 +21,15 @@ class AttendanceController extends Controller
 {
     use SystemTrait;
 
-    protected $attendanceService;
+    protected $attendanceService,$sessionService,$classRoutineService, $teacherService,$subjectService;
 
-    public function __construct(AttendanceService $attendanceService)
+    public function __construct(AttendanceService $attendanceService, SessionService $sessionService, ClassRoutineService $classRoutineService, TeacherService $teacherService, SubjectService $subjectService)
     {
         $this->attendanceService = $attendanceService;
+        $this->sessionService = $sessionService;
+        $this->classRoutineService = $classRoutineService;
+        $this->teacherService = $teacherService;
+        $this->subjectService = $subjectService;
     }
 
 
@@ -105,14 +114,16 @@ class AttendanceController extends Controller
 
     public function create()
     {
+        $sessions = $this->sessionService->activeList();
         return Inertia::render(
             'Backend/Attendance/Form',
             [
-                'pageTitle' => fn () => 'Attendance Create',
+                'pageTitle' => fn () => 'Attendance',
                 'breadcrumbs' => fn () => [
                     ['link' => null, 'title' => 'Attendance Manage'],
-                    ['link' => route('backend.attendance.create'), 'title' => 'Attendance Create'],
+                    ['link' => route('backend.attendance.create'), 'title' => 'Attendance'],
                 ],
+                'sessions' => fn() => $sessions,
             ]
         );
     }
@@ -314,4 +325,54 @@ class AttendanceController extends Controller
                 ->with('errorMessage', $message);
         }
     }
-        }
+    public function show()
+    {
+        $classRoutines = $this->classRoutineService->activeList();
+        $teachers = $this->teacherService->activeList();
+        $sessions = $this->sessionService->activeList();
+        return Inertia::render(
+            'Backend/Attendance/ClassSection',
+            [
+                'pageTitle' => fn () => 'Attendance',
+                'breadcrumbs' => fn () => [
+                    ['link' => null, 'title' => 'Attendance Manage'],
+                ],
+                'classRoutines' => fn() => $classRoutines,
+                'teachers' => fn() => $teachers,
+                'sessions' => fn() => $sessions,
+            ]
+        );
+    }
+    public function getTeachersBySession($sessionId)
+    {
+        $teachers = $this->classRoutineService->getTeachersBySession($sessionId);
+        return response()->json($teachers);
+    }
+
+    public function getClassesByTeacher($sessionId, $teacherId)
+    {
+        $classes = $this->classRoutineService->getClassesByTeacher($sessionId, $teacherId);
+        return response()->json($classes);
+    }
+
+    public function getSectionsByClass($classId)
+    {
+        $sections = $this->classRoutineService->getSectionsByClass($classId);
+        return response()->json($sections);
+    }
+    public function getSubjectsBySection($sectionId)
+    {
+        $subjects = $this->classRoutineService->getSubjectsBySection($sectionId);
+        return response()->json($subjects);
+    }
+    public function filterStudents($sessionId, $classId, $sectionId)
+    {
+        $students = Student::with('class','section')->where('session_id', $sessionId)
+            ->where('class_id', $classId)
+            ->where('section_id', $sectionId)
+            ->get();
+
+        return response()->json($students);
+    }
+
+}

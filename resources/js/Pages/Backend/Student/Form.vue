@@ -10,7 +10,7 @@
     import AlertMessage from '@/Components/AlertMessage.vue';
     import { displayResponse, displayWarning } from '@/responseMessage.js';
 
-    const props = defineProps(['student', 'id','classes','sections','groups']);
+    const props = defineProps(['student', 'id','classes','sections','groups','sessions']);
 
     const form = useForm({ 
         name: props.student?.name ?? '',
@@ -22,6 +22,7 @@
         date_of_birth: props.student?.date_of_birth ?? '',
         admission_date: props.student?.admission_date ?? '',
         photo: props.student?.photo ?? '',
+        session_id: props.student?.session_id ?? '',
         class_id: props.student?.class_id ?? '',
         section_id: props.student?.section_id ?? '',
         group_id: props.student?.group_id ?? '',
@@ -81,7 +82,7 @@
         });
     };
 
-    </script>
+</script>
 
     <template>
         <BackendLayout>
@@ -100,18 +101,28 @@
                 <form @submit.prevent="submit" class="p-4">
                     <AlertMessage />
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
+
+                        <div class="col-span-1 md:col-span-2">
+                            <InputLabel for="session_id" value="Session Year" />
+                            <select id="session_id" class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
+                                v-model="form.session_id">
+                                <option value="">Select Session</option>
+                                <option v-for="session in sessions" :key="session.id" :value="session.id">{{ session.session_year }}</option>
+                            </select>
+                            <InputError class="mt-2" :message="form.errors.session_id" />
+                        </div>
                         <!-- Class ID -->
                         <div class="col-span-1 md:col-span-2">
-                            <InputLabel for="class_id" value="Class" />
+                            <InputLabel for="class_id" value="Class"/>
                             <select id="class_id" class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600" @change="fetchGroupsByClass(form.class_id)"
                                 v-model="form.class_id">
-                                <option value="">Class</option>
+                                <option value="">Select Class</option>
                                 <option v-for="classe in classes" :key="classe.id" :value="classe.id">{{ classe.name }}</option>
                             </select>
                             <InputError class="mt-2" :message="form.errors.class_id" />
                         </div>
                         <div class="col-span-1 md:col-span-2">
-                            <InputLabel for="class_id" value="Class" />
+                            <InputLabel for="section_id" value="Section" />
                             <select id="section_id" class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
                                 v-model="form.section_id">
                                 <option value="">Select Section</option>

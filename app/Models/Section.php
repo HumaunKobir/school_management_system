@@ -15,7 +15,6 @@ class Section extends Authenticatable
 
     protected $fillable = [
                     'id',
-                    'session_id',
                     'class_id',
                     'name',
                     'total_sit'
@@ -31,14 +30,6 @@ class Section extends Authenticatable
         static::updating(function ($model) {
             $model->updated_at = date('Y-m-d H:i:s');
         });
-    }
-    public function session()
-    {
-        return $this->belongsTo(Session::class, 'session_id','id');
-    }
-    public function sessions()
-    {
-        return $this->hasMany(Session::class, 'session_id','id');
     }
     public function students()
     {

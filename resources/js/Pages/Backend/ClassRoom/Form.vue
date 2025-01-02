@@ -70,13 +70,11 @@
                     <AlertMessage />
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
 
-                       
-
                         <div class="col-span-1 md:col-span-1">
                             <InputLabel for="room_number" value="Room Number" />
                             <input id="room_number"
                                 class="block w-full p-2 text-sm rounded-md shadow-sm border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 focus:border-indigo-300 dark:focus:border-slate-600"
-                                v-model="form.room_number" type="number" placeholder="Room Number" />
+                                v-model="form.room_number" type="text" placeholder="Room Number" />
                             <InputError class="mt-2" :message="form.errors.room_number" />
                         </div>
                         <div class="col-span-1 md:col-span-1">

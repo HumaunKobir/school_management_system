@@ -15,14 +15,12 @@
         {
             Schema::create('sections', function (Blueprint $table) {
                 $table->id();
-                $table->unsignedBigInteger('session_id')->nullable();
                 $table->unsignedBigInteger('class_id')->nullable();
                 $table->string('name');
                 $table->string('total_sit');
                 $table->enum('status',['Active','Inactive','Deleted'])->default('Active');
                 $table->softDeletes();
                 $table->timestamps();
-                $table->foreign('session_id')->references('id')->on('sessionsyear')->onDelete('cascade');
                 $table->foreign('class_id')->references('id')->on('classes')->onDelete('cascade');
             });
         }
